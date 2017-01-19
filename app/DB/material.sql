@@ -3,6 +3,7 @@ DROP TABLE IF EXISTS `wechat_material`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `wechat_material` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
+  `media_id` varchar(255) DEFAULT NULL,
   `title` blob NOT NULL,
   `thumb_media_id` varchar(255) DEFAULT NULL,
   `show_cover_pic` varchar(400) DEFAULT NULL,
