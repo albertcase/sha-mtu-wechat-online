@@ -19,11 +19,19 @@ class dataSql{
     if(!is_array($data) || !isset($data[0]))
       return false;
     $article = array();
+    $material = array();
     foreach($data as $x => $x_val){
       if(isset($x_val['content']) && isset($x_val['content']['news_item'])){
+        $material[] = array(
+          'media_id' => $x_val['media_id'],
+          'update_time' => $x_val['update_time']
+        );
+        if(!isset($article[$x_val['media_id']]))
+          $article[$x_val['media_id']] = array();
         foreach($x_val['content']['news_item'] as $xx => $xx_val){
-          $article[] = array(
+          $article[$x_val['media_id']][] = array(
             'title' => $this->getArrayParams($xx_val, 'title'),
+            'media_id' => $x_val['media_id'],
             'thumb_media_id' => $this->getArrayParams($xx_val, 'thumb_media_id'),
             'show_cover_pic' => $this->getArrayParams($xx_val, 'show_cover_pic'),
             'author' => $this->getArrayParams($xx_val, 'author'),
@@ -35,13 +43,30 @@ class dataSql{
         }
       }
     }
+    $this->insertMainMaterial($material);
     $this->insertMaterial($article);
   }
 
   public function insertMaterial($data){
+    foreach($data as $x => $x_val){
+      if(!$this->searchData(array('media_id' => $x), array('id'), 'wechat_material_news')){
+        foreach($x_val as $xx){
+            $this->insertData($xx,'wechat_material_news');
+        }
+      }
+    }
+  }
+
+  public function insertMainMaterial($data){
     foreach($data as $x){
-      if(!$this->searchData(array('thumb_media_id' => $x['thumb_media_id']), array('id'), 'wechat_material'))
+      if(!$result = $this->searchData(array('media_id' => $x['media_id']), array('id', 'update_time'), 'wechat_material')){
         $this->insertData($x,'wechat_material');
+      }else{
+        if(isset($result['0']) && isset($result['0']['update_time']) && $result['0']['update_time']!=$x['update_time']){
+          $this->deleteData(array("media_id" => $x['media_id']), 'wechat_material_news');
+          $this->updateData(array('media_id' => $x['media_id']), array('update_time' => $x['update_time']), 'wechat_material');
+        }
+      }
     }
   }
 

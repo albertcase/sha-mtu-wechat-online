@@ -21,7 +21,7 @@ parameters:
   # wechat config
     wechat_Token: mtu_online_wechat_samesamechina
     wechat_AppID: wxdffb071f687633b8
-    wechat_AppSecret: 63977215c2939310e5518bd289ba65d8
+    wechat_AppSecret: 8395e578d5d08499df2bbd6750a2f43e
 
     bundles:
       - wechat_api
