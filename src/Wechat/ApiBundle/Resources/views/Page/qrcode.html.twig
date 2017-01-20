@@ -4,7 +4,7 @@
 
 {% block javascripts %}
   {{ parent() }}
-  <script type="text/javascript" src="/source/change/js/qrcode.js"></script>
+  <script type="text/javascript" src="{{ asset('bundles/wechatapi/js/qrcode.min.js') }}"></script>
 {% endblock %}
 
 {% block maincontent %}

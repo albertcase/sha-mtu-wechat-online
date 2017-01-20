@@ -4,7 +4,7 @@
 
 {% block javascripts %}
   {{ parent() }}
-  <script type="text/javascript" src="/source/change/js/oauth.js"></script>
+  <script type="text/javascript" src="{{ asset('bundles/wechatapi/js/oauth.min.js') }}"></script>
     {{ parent() }}
     <script>
       var pagecode = {

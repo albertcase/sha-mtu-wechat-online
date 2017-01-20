@@ -3,7 +3,7 @@
 {% block navmenu %}navactive{% endblock %}
 {% block stylesheets %}
   {{ parent() }}
-  <link href="/source/change/css/wechatmenu.css" rel="stylesheet"  />
+  <link href="{{ asset('bundles/wechatapi/css/wechatmenu.min.css') }}" rel="stylesheet"  />
 {% endblock %}
 
 {% block maincontent %}

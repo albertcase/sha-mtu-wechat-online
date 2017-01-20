@@ -4,12 +4,12 @@
 
 {% block stylesheets %}
   {{ parent() }}
-  <link href="{{ asset('bundles/wechatapi/css/storescss.css') }}" rel="stylesheet"  />
+  <link href="{{ asset('bundles/wechatapi/css/storescss.min.css') }}" rel="stylesheet"  />
 {% endblock %}
 
 {% block javascripts %}
   {{ parent() }}
-  <script type="text/javascript" src="{{ asset('bundles/wechatapi/js/storesjs.js') }}"></script>
+  <script type="text/javascript" src="{{ asset('bundles/wechatapi/js/storesjs.min.js') }}"></script>
 {% endblock %}
 
 {% block maincontent %}

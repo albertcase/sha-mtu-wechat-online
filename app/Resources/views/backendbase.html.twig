@@ -10,24 +10,24 @@
         <title>{% block title %}Page Name{% endblock %}</title>
         <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" />
 {% block stylesheets %}
-        <link href="/source/manage/css/bootstrap.min.css" rel="stylesheet">
-        <link href="/source/manage/css/plugins/metisMenu/metisMenu.min.css" rel="stylesheet">
-        <link href="/source/manage/css/plugins/dataTables.bootstrap.css" rel="stylesheet">
-        <link href="/source/manage/css/sb-admin-2.css" rel="stylesheet">
-        <link href="{{ asset('bundles/wechatapi/css/main.css') }}" rel="stylesheet"  />
-        <link href="/source/manage/font-awesome-4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
-        <link rel="stylesheet" href="{{ asset('bundles/wechatapi/css/tipscss.css') }}" />
+        <link href="{{ asset('bundles/wechatapi/manage/css/bootstrap.min.css') }}" rel="stylesheet">
+        <link href="{{ asset('bundles/wechatapi/manage/css/plugins/metisMenu/metisMenu.min.css') }}" rel="stylesheet">
+        <link href="{{ asset('bundles/wechatapi/manage/css/plugins/dataTables.bootstrap.css') }}" rel="stylesheet">
+        <link href="{{ asset('bundles/wechatapi/manage/css/sb-admin-2.css') }}" rel="stylesheet">
+        <link href="{{ asset('bundles/wechatapi/css/main.min.css') }}" rel="stylesheet"  />
+        <link href="{{ asset('bundles/wechatapi/manage/font-awesome-4.1.0/css/font-awesome.min.css') }}" rel="stylesheet" type="text/css" />
+        <link rel="stylesheet" href="{{ asset('bundles/wechatapi/css/tipscss.min.css') }}" />
 {% endblock %}
 
 {% block javascripts %}
-<script type="text/javascript" src="/source/manage/js/jquery-1.11.0.js"></script>
-<script type="text/javascript" src="/source/manage/js/bootstrap.min.js"></script>
-<script type="text/javascript" src="/source/manage/js/plugins/metisMenu/metisMenu.min.js"></script>
-<script type="text/javascript" src="/source/manage/js/plugins/dataTables/jquery.dataTables.js"></script>
-<script type="text/javascript" src="/source/manage/js/plugins/dataTables/dataTables.bootstrap.js"></script>
-<script type="text/javascript" src="/source/manage/js/sb-admin-2.js"></script>
-<script type="text/javascript" src="{{ asset('bundles/wechatapi/js/main.js') }}"></script>
-<script type="text/javascript" src="{{ asset('bundles/wechatapi/js/tipsbox.js') }}"></script>
+<script type="text/javascript" src="{{ asset('bundles/wechatapi/manage/js/jquery-1.11.0.js') }}"></script>
+<script type="text/javascript" src="{{ asset('bundles/wechatapi/manage/js/bootstrap.min.js') }}"></script>
+<script type="text/javascript" src="{{ asset('bundles/wechatapi/manage/js/plugins/metisMenu/metisMenu.min.js') }}"></script>
+<script type="text/javascript" src="{{ asset('bundles/wechatapi/manage/js/plugins/dataTables/jquery.dataTables.js') }}"></script>
+<script type="text/javascript" src="{{ asset('bundles/wechatapi/manage/js/plugins/dataTables/dataTables.bootstrap.js') }}"></script>
+<script type="text/javascript" src="{{ asset('bundles/wechatapi/manage/js/sb-admin-2.js') }}"></script>
+<script type="text/javascript" src="{{ asset('bundles/wechatapi/js/main.min.js') }}"></script>
+<script type="text/javascript" src="{{ asset('bundles/wechatapi/js/tipsbox.min.js') }}"></script>
 {% endblock %}
 </head>
 <body>
