@@ -77,12 +77,18 @@ class PdoCaster
             } catch (\Exception $e) {
             }
         }
+        if (isset($attr[$k = 'STATEMENT_CLASS'][1])) {
+            if ($attr[$k][1]) {
+                $attr[$k][1] = new ArgsStub($attr[$k][1], '__construct', $attr[$k][0]);
+            }
+            $attr[$k][0] = new ClassStub($attr[$k][0]);
+        }
 
-        $prefix = "\0~\0";
+        $prefix = Caster::PREFIX_VIRTUAL;
         $a += array(
             $prefix.'inTransaction' => method_exists($c, 'inTransaction'),
             $prefix.'errorInfo' => $c->errorInfo(),
-            $prefix.'attributes' => $attr,
+            $prefix.'attributes' => new EnumStub($attr),
         );
 
         if ($a[$prefix.'inTransaction']) {
@@ -102,7 +108,7 @@ class PdoCaster
 
     public static function castPdoStatement(\PDOStatement $c, array $a, Stub $stub, $isNested)
     {
-        $prefix = "\0~\0";
+        $prefix = Caster::PREFIX_VIRTUAL;
         $a[$prefix.'errorInfo'] = $c->errorInfo();
 
         if (!isset($a[$prefix.'errorInfo'][1], $a[$prefix.'errorInfo'][2])) {

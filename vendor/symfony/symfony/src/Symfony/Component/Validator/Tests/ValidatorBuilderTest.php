@@ -11,7 +11,6 @@
 
 namespace Symfony\Component\Validator\Tests;
 
-use Symfony\Component\Validator\Validation;
 use Symfony\Component\Validator\ValidatorBuilder;
 use Symfony\Component\Validator\ValidatorBuilderInterface;
 
@@ -35,7 +34,7 @@ class ValidatorBuilderTest extends \PHPUnit_Framework_TestCase
     public function testAddObjectInitializer()
     {
         $this->assertSame($this->builder, $this->builder->addObjectInitializer(
-            $this->getMock('Symfony\Component\Validator\ObjectInitializerInterface')
+            $this->getMockBuilder('Symfony\Component\Validator\ObjectInitializerInterface')->getMock()
         ));
     }
 
@@ -87,21 +86,21 @@ class ValidatorBuilderTest extends \PHPUnit_Framework_TestCase
     public function testSetMetadataCache()
     {
         $this->assertSame($this->builder, $this->builder->setMetadataCache(
-            $this->getMock('Symfony\Component\Validator\Mapping\Cache\CacheInterface'))
+            $this->getMockBuilder('Symfony\Component\Validator\Mapping\Cache\CacheInterface')->getMock())
         );
     }
 
     public function testSetConstraintValidatorFactory()
     {
         $this->assertSame($this->builder, $this->builder->setConstraintValidatorFactory(
-            $this->getMock('Symfony\Component\Validator\ConstraintValidatorFactoryInterface'))
+            $this->getMockBuilder('Symfony\Component\Validator\ConstraintValidatorFactoryInterface')->getMock())
         );
     }
 
     public function testSetTranslator()
     {
         $this->assertSame($this->builder, $this->builder->setTranslator(
-            $this->getMock('Symfony\Component\Translation\TranslatorInterface'))
+            $this->getMockBuilder('Symfony\Component\Translation\TranslatorInterface')->getMock())
         );
     }
 
@@ -110,51 +109,8 @@ class ValidatorBuilderTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($this->builder, $this->builder->setTranslationDomain('TRANS_DOMAIN'));
     }
 
-    /**
-     * @group legacy
-     */
-    public function testLegacyDefaultApiVersion()
+    public function testGetValidator()
     {
-        $this->iniSet('error_reporting', -1 & ~E_USER_DEPRECATED);
-
-        if (PHP_VERSION_ID < 50309) {
-            // Old implementation on PHP < 5.3.9
-            $this->assertInstanceOf('Symfony\Component\Validator\Validator', $this->builder->getValidator());
-        } else {
-            // Legacy compatible implementation on PHP >= 5.3.9
-            $this->assertInstanceOf('Symfony\Component\Validator\Validator\LegacyValidator', $this->builder->getValidator());
-        }
-    }
-
-    /**
-     * @group legacy
-     */
-    public function testLegacySetApiVersion24()
-    {
-        $this->iniSet('error_reporting', -1 & ~E_USER_DEPRECATED);
-
-        $this->assertSame($this->builder, $this->builder->setApiVersion(Validation::API_VERSION_2_4));
-        $this->assertInstanceOf('Symfony\Component\Validator\Validator', $this->builder->getValidator());
-    }
-
-    public function testSetApiVersion25()
-    {
-        $this->assertSame($this->builder, $this->builder->setApiVersion(Validation::API_VERSION_2_5));
         $this->assertInstanceOf('Symfony\Component\Validator\Validator\RecursiveValidator', $this->builder->getValidator());
-    }
-
-    /**
-     * @group legacy
-     */
-    public function testLegacySetApiVersion24And25()
-    {
-        $this->iniSet('error_reporting', -1 & ~E_USER_DEPRECATED);
-
-        if (PHP_VERSION_ID < 50309) {
-            $this->markTestSkipped('Not supported prior to PHP 5.3.9');
-        }
-
-        $this->assertSame($this->builder, $this->builder->setApiVersion(Validation::API_VERSION_2_5_BC));
-        $this->assertInstanceOf('Symfony\Component\Validator\Validator\LegacyValidator', $this->builder->getValidator());
     }
 }

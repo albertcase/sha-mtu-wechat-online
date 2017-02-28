@@ -12,13 +12,12 @@
 namespace Symfony\Component\DependencyInjection\Compiler;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Exception\EnvParameterException;
 
 /**
  * This class is used to remove circular dependencies between individual passes.
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
- *
- * @api
  */
 class Compiler
 {
@@ -27,9 +26,6 @@ class Compiler
     private $loggingFormatter;
     private $serviceReferenceGraph;
 
-    /**
-     * Constructor.
-     */
     public function __construct()
     {
         $this->passConfig = new PassConfig();
@@ -41,8 +37,6 @@ class Compiler
      * Returns the PassConfig.
      *
      * @return PassConfig The PassConfig instance
-     *
-     * @api
      */
     public function getPassConfig()
     {
@@ -53,8 +47,6 @@ class Compiler
      * Returns the ServiceReferenceGraph.
      *
      * @return ServiceReferenceGraph The ServiceReferenceGraph instance
-     *
-     * @api
      */
     public function getServiceReferenceGraph()
     {
@@ -74,14 +66,26 @@ class Compiler
     /**
      * Adds a pass to the PassConfig.
      *
-     * @param CompilerPassInterface $pass A compiler pass
-     * @param string                $type The type of the pass
-     *
-     * @api
+     * @param CompilerPassInterface $pass     A compiler pass
+     * @param string                $type     The type of the pass
+     * @param int                   $priority Used to sort the passes
      */
-    public function addPass(CompilerPassInterface $pass, $type = PassConfig::TYPE_BEFORE_OPTIMIZATION)
+    public function addPass(CompilerPassInterface $pass, $type = PassConfig::TYPE_BEFORE_OPTIMIZATION/*, $priority = 0*/)
     {
-        $this->passConfig->addPass($pass, $type);
+        if (func_num_args() >= 3) {
+            $priority = func_get_arg(2);
+        } else {
+            if (__CLASS__ !== get_class($this)) {
+                $r = new \ReflectionMethod($this, __FUNCTION__);
+                if (__CLASS__ !== $r->getDeclaringClass()->getName()) {
+                    @trigger_error(sprintf('Method %s() will have a third `$priority = 0` argument in version 4.0. Not defining it is deprecated since 3.2.', get_class($this), __FUNCTION__), E_USER_DEPRECATED);
+                }
+            }
+
+            $priority = 0;
+        }
+
+        $this->passConfig->addPass($pass, $type, $priority);
     }
 
     /**
@@ -108,13 +112,32 @@ class Compiler
      * Run the Compiler and process all Passes.
      *
      * @param ContainerBuilder $container
-     *
-     * @api
      */
     public function compile(ContainerBuilder $container)
     {
-        foreach ($this->passConfig->getPasses() as $pass) {
-            $pass->process($container);
+        try {
+            foreach ($this->passConfig->getPasses() as $pass) {
+                $pass->process($container);
+            }
+        } catch (\Exception $e) {
+            $usedEnvs = array();
+            $prev = $e;
+
+            do {
+                $msg = $prev->getMessage();
+
+                if ($msg !== $resolvedMsg = $container->resolveEnvPlaceholders($msg, null, $usedEnvs)) {
+                    $r = new \ReflectionProperty($prev, 'message');
+                    $r->setAccessible(true);
+                    $r->setValue($prev, $resolvedMsg);
+                }
+            } while ($prev = $prev->getPrevious());
+
+            if ($usedEnvs) {
+                $e = new EnvParameterException($usedEnvs, $e);
+            }
+
+            throw $e;
         }
     }
 }

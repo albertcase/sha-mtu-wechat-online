@@ -11,7 +11,6 @@
 
 namespace Symfony\Component\Form;
 
-use Symfony\Component\Form\Exception\InvalidArgumentException;
 use Symfony\Component\Form\Exception\UnexpectedTypeException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -45,14 +44,6 @@ class ResolvedFormType implements ResolvedFormTypeInterface
 
     public function __construct(FormTypeInterface $innerType, array $typeExtensions = array(), ResolvedFormTypeInterface $parent = null)
     {
-        if (!preg_match('/^[a-z0-9_]*$/i', $innerType->getName())) {
-            throw new InvalidArgumentException(sprintf(
-                'The "%s" form type name ("%s") is not valid. Names must only contain letters, numbers, and "_".',
-                get_class($innerType),
-                $innerType->getName()
-            ));
-        }
-
         foreach ($typeExtensions as $extension) {
             if (!$extension instanceof FormTypeExtensionInterface) {
                 throw new UnexpectedTypeException($extension, 'Symfony\Component\Form\FormTypeExtensionInterface');
@@ -67,9 +58,9 @@ class ResolvedFormType implements ResolvedFormTypeInterface
     /**
      * {@inheritdoc}
      */
-    public function getName()
+    public function getBlockPrefix()
     {
-        return $this->innerType->getName();
+        return $this->innerType->getBlockPrefix();
     }
 
     /**
@@ -123,8 +114,8 @@ class ResolvedFormType implements ResolvedFormTypeInterface
     /**
      * Configures a form builder for the type hierarchy.
      *
-     * @param FormBuilderInterface $builder The builder to configure.
-     * @param array                $options The options used for the configuration.
+     * @param FormBuilderInterface $builder The builder to configure
+     * @param array                $options The options used for the configuration
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
@@ -144,9 +135,9 @@ class ResolvedFormType implements ResolvedFormTypeInterface
      *
      * This method is called before the children of the view are built.
      *
-     * @param FormView      $view    The form view to configure.
-     * @param FormInterface $form    The form corresponding to the view.
-     * @param array         $options The options used for the configuration.
+     * @param FormView      $view    The form view to configure
+     * @param FormInterface $form    The form corresponding to the view
+     * @param array         $options The options used for the configuration
      */
     public function buildView(FormView $view, FormInterface $form, array $options)
     {
@@ -166,9 +157,9 @@ class ResolvedFormType implements ResolvedFormTypeInterface
      *
      * This method is called after the children of the view have been built.
      *
-     * @param FormView      $view    The form view to configure.
-     * @param FormInterface $form    The form corresponding to the view.
-     * @param array         $options The options used for the configuration.
+     * @param FormView      $view    The form view to configure
+     * @param FormInterface $form    The form corresponding to the view
+     * @param array         $options The options used for the configuration
      */
     public function finishView(FormView $view, FormInterface $form, array $options)
     {
@@ -187,7 +178,7 @@ class ResolvedFormType implements ResolvedFormTypeInterface
     /**
      * Returns the configured options resolver used for this type.
      *
-     * @return \Symfony\Component\OptionsResolver\OptionsResolverInterface The options resolver.
+     * @return \Symfony\Component\OptionsResolver\OptionsResolver The options resolver
      */
     public function getOptionsResolver()
     {
@@ -198,10 +189,10 @@ class ResolvedFormType implements ResolvedFormTypeInterface
                 $this->optionsResolver = new OptionsResolver();
             }
 
-            $this->innerType->setDefaultOptions($this->optionsResolver);
+            $this->innerType->configureOptions($this->optionsResolver);
 
             foreach ($this->typeExtensions as $extension) {
-                $extension->setDefaultOptions($this->optionsResolver);
+                $extension->configureOptions($this->optionsResolver);
             }
         }
 
@@ -213,12 +204,12 @@ class ResolvedFormType implements ResolvedFormTypeInterface
      *
      * Override this method if you want to customize the builder class.
      *
-     * @param string               $name      The name of the builder.
-     * @param string               $dataClass The data class.
-     * @param FormFactoryInterface $factory   The current form factory.
-     * @param array                $options   The builder options.
+     * @param string               $name      The name of the builder
+     * @param string               $dataClass The data class
+     * @param FormFactoryInterface $factory   The current form factory
+     * @param array                $options   The builder options
      *
-     * @return FormBuilderInterface The new builder instance.
+     * @return FormBuilderInterface The new builder instance
      */
     protected function newBuilder($name, $dataClass, FormFactoryInterface $factory, array $options)
     {
@@ -238,9 +229,9 @@ class ResolvedFormType implements ResolvedFormTypeInterface
      *
      * Override this method if you want to customize the view class.
      *
-     * @param FormView|null $parent The parent view, if available.
+     * @param FormView|null $parent The parent view, if available
      *
-     * @return FormView A new view instance.
+     * @return FormView A new view instance
      */
     protected function newView(FormView $parent = null)
     {

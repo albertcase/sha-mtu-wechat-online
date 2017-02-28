@@ -12,12 +12,12 @@
 namespace Symfony\Component\Validator\Context;
 
 use Symfony\Component\Translation\TranslatorInterface;
-use Symfony\Component\Validator\ClassBasedInterface;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
-use Symfony\Component\Validator\Exception\BadMethodCallException;
+use Symfony\Component\Validator\Mapping\ClassMetadataInterface;
 use Symfony\Component\Validator\Mapping\MetadataInterface;
+use Symfony\Component\Validator\Mapping\MemberMetadata;
 use Symfony\Component\Validator\Mapping\PropertyMetadataInterface;
 use Symfony\Component\Validator\Util\PropertyPath;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -26,7 +26,6 @@ use Symfony\Component\Validator\Violation\ConstraintViolationBuilder;
 /**
  * The context used and created by {@link ExecutionContextFactory}.
  *
- * @since  2.5
  * @author Bernhard Schussek <bschussek@gmail.com>
  *
  * @see ExecutionContextInterface
@@ -181,19 +180,8 @@ class ExecutionContext implements ExecutionContextInterface
     /**
      * {@inheritdoc}
      */
-    public function addViolation($message, array $parameters = array(), $invalidValue = null, $plural = null, $code = null)
+    public function addViolation($message, array $parameters = array())
     {
-        // The parameters $invalidValue and following are ignored by the new
-        // API, as they are not present in the new interface anymore.
-        // You should use buildViolation() instead.
-        if (func_num_args() > 2) {
-            throw new BadMethodCallException(
-                'The parameters $invalidValue, $pluralization and $code are '.
-                'not supported anymore as of Symfony 2.5. Please use '.
-                'buildViolation() instead or enable the legacy mode.'
-            );
-        }
-
         $this->violations->add(new ConstraintViolation(
             $this->translator->trans($message, $parameters, $this->translationDomain),
             $message,
@@ -281,12 +269,17 @@ class ExecutionContext implements ExecutionContextInterface
         return $this->group;
     }
 
+    public function getConstraint()
+    {
+        return $this->constraint;
+    }
+
     /**
      * {@inheritdoc}
      */
     public function getClassName()
     {
-        return $this->metadata instanceof ClassBasedInterface ? $this->metadata->getClassName() : null;
+        return $this->metadata instanceof MemberMetadata || $this->metadata instanceof ClassMetadataInterface ? $this->metadata->getClassName() : null;
     }
 
     /**
@@ -303,51 +296,6 @@ class ExecutionContext implements ExecutionContextInterface
     public function getPropertyPath($subPath = '')
     {
         return PropertyPath::append($this->propertyPath, $subPath);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function addViolationAt($subPath, $message, array $parameters = array(), $invalidValue = null, $plural = null, $code = null)
-    {
-        throw new BadMethodCallException(
-            'addViolationAt() is not supported anymore as of Symfony 2.5. '.
-            'Please use buildViolation() instead or enable the legacy mode.'
-        );
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function validate($value, $subPath = '', $groups = null, $traverse = false, $deep = false)
-    {
-        throw new BadMethodCallException(
-            'validate() is not supported anymore as of Symfony 2.5. '.
-            'Please use getValidator() instead or enable the legacy mode.'
-        );
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function validateValue($value, $constraints, $subPath = '', $groups = null)
-    {
-        throw new BadMethodCallException(
-            'validateValue() is not supported anymore as of Symfony 2.5. '.
-            'Please use getValidator() instead or enable the legacy mode.'
-        );
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getMetadataFactory()
-    {
-        throw new BadMethodCallException(
-            'getMetadataFactory() is not supported anymore as of Symfony 2.5. '.
-            'Please use getValidator() in combination with getMetadataFor() '.
-            'or hasMetadataFor() instead or enable the legacy mode.'
-        );
     }
 
     /**

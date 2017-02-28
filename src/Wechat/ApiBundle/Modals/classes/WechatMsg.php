@@ -98,8 +98,8 @@ class WechatMsg
 //xmlarray end
 
   public function textMsg($data){
-    if(!$this->checkData(array('Content'), $data['MsgData']))
-      return false;
+    if(!$this->checkData(array('Content'), $data['MsgData']) || !$data['MsgData']['Content'])
+      return "";
     $msg = "<xml>
 <ToUserName><![CDATA[{$data['ToUserName']}]]></ToUserName>
 <FromUserName><![CDATA[{$data['FromUserName']}]]></FromUserName>
@@ -111,8 +111,8 @@ class WechatMsg
   }
 
   public function imageMsg($data){
-    if(!$this->checkData(array('MediaId'), $data['MsgData']))
-      return false;
+    if(!$this->checkData(array('MediaId'), $data['MsgData']) || !$data['MsgData']['MediaId'])
+      return "";
     $msg = "<xml>
 <ToUserName><![CDATA[{$data['ToUserName']}]]></ToUserName>
 <FromUserName><![CDATA[{$data['FromUserName']}]]></FromUserName>
@@ -126,8 +126,8 @@ class WechatMsg
   }
 
   public function voiceMsg($data){
-    if(!$this->checkData(array('MediaId'), $data['MsgData']))
-      return false;
+    if(!$this->checkData(array('MediaId'), $data['MsgData']) || !$data['MsgData']['MediaId'])
+      return "";
     $msg = "<xml>
 <ToUserName><![CDATA[{$data['ToUserName']}]]></ToUserName>
 <FromUserName><![CDATA[{$data['FromUserName']}]]></FromUserName>
@@ -141,8 +141,8 @@ class WechatMsg
   }
 
   public function videoMsg($data){
-    if(!$this->checkData(array('MediaId', 'Title', 'Description'), $data['MsgData']))
-      return false;
+    if(!$this->checkData(array('MediaId', 'Title', 'Description'), $data['MsgData']) || !$data['MsgData']['MediaId'])
+      return "";
     $msg = "<xml>
 <ToUserName><![CDATA[{$data['ToUserName']}]]></ToUserName>
 <FromUserName><![CDATA[{$data['FromUserName']}]]></FromUserName>
@@ -159,7 +159,7 @@ class WechatMsg
 
   public function musicMsg($data){
     if(!$this->checkData(array('Title', 'Description', 'MusicUrl', 'HQMusicUrl', 'ThumbMediaId'), $data['MsgData']))
-      return false;
+      return "";
     $msg = "<xml>
 <ToUserName><![CDATA[{$data['ToUserName']}]]></ToUserName>
 <FromUserName><![CDATA[{$data['FromUserName']}]]></FromUserName>
@@ -178,9 +178,9 @@ class WechatMsg
 
   public function newsMsg($data){
     if(!$this->checkData(array('Articles'), $data['MsgData']))
-      return false;
+      return "";
     if(!is_array($data['MsgData']['Articles']) || !count($data['MsgData']['Articles']) || count($data['MsgData']['Articles']) > 10)
-      return false;
+      return "";
     $ArticleCount = count($data['MsgData']['Articles']);
     $msg = "<xml>
 <ToUserName><![CDATA[{$data['ToUserName']}]]></ToUserName>
@@ -191,7 +191,7 @@ class WechatMsg
 <Articles>";
     foreach($data['MsgData']['Articles'] as $item){
       if(!$this->checkData(array('Title', 'Description', 'PicUrl','Url'), $item))
-        return false;
+        return "";
       $msg .= "<item>
 <Title><![CDATA[{$item['Title']}]]></Title>
 <Description><![CDATA[{$item['Description']}]]></Description>

@@ -19,11 +19,11 @@ class DigestAuthenticationEntryPointTest extends \PHPUnit_Framework_TestCase
 {
     public function testStart()
     {
-        $request = $this->getMock('Symfony\Component\HttpFoundation\Request');
+        $request = $this->getMockBuilder('Symfony\Component\HttpFoundation\Request')->getMock();
 
         $authenticationException = new AuthenticationException('TheAuthenticationExceptionMessage');
 
-        $entryPoint = new DigestAuthenticationEntryPoint('TheRealmName', 'TheKey');
+        $entryPoint = new DigestAuthenticationEntryPoint('TheRealmName', 'TheSecret');
         $response = $entryPoint->start($request, $authenticationException);
 
         $this->assertEquals(401, $response->getStatusCode());
@@ -32,9 +32,9 @@ class DigestAuthenticationEntryPointTest extends \PHPUnit_Framework_TestCase
 
     public function testStartWithNoException()
     {
-        $request = $this->getMock('Symfony\Component\HttpFoundation\Request');
+        $request = $this->getMockBuilder('Symfony\Component\HttpFoundation\Request')->getMock();
 
-        $entryPoint = new DigestAuthenticationEntryPoint('TheRealmName', 'TheKey');
+        $entryPoint = new DigestAuthenticationEntryPoint('TheRealmName', 'TheSecret');
         $response = $entryPoint->start($request);
 
         $this->assertEquals(401, $response->getStatusCode());
@@ -43,11 +43,11 @@ class DigestAuthenticationEntryPointTest extends \PHPUnit_Framework_TestCase
 
     public function testStartWithNonceExpiredException()
     {
-        $request = $this->getMock('Symfony\Component\HttpFoundation\Request');
+        $request = $this->getMockBuilder('Symfony\Component\HttpFoundation\Request')->getMock();
 
         $nonceExpiredException = new NonceExpiredException('TheNonceExpiredExceptionMessage');
 
-        $entryPoint = new DigestAuthenticationEntryPoint('TheRealmName', 'TheKey');
+        $entryPoint = new DigestAuthenticationEntryPoint('TheRealmName', 'TheSecret');
         $response = $entryPoint->start($request, $nonceExpiredException);
 
         $this->assertEquals(401, $response->getStatusCode());

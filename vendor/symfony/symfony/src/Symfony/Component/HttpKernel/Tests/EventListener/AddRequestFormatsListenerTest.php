@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
- * Test AddRequestFormatsListener class
+ * Test AddRequestFormatsListener class.
  *
  * @author Gildas Quemener <gildas.quemener@gmail.com>
  */
@@ -64,7 +64,7 @@ class AddRequestFormatsListenerTest extends \PHPUnit_Framework_TestCase
 
     protected function getRequestMock()
     {
-        return $this->getMock('Symfony\Component\HttpFoundation\Request');
+        return $this->getMockBuilder('Symfony\Component\HttpFoundation\Request')->getMock();
     }
 
     protected function getGetResponseEventMock(Request $request)

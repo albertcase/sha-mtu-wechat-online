@@ -1,6 +1,50 @@
 CHANGELOG
 =========
 
+3.2.0
+-----
+
+ * added `AppVariable::getToken()`
+ * Deprecated the possibility to inject the Form `TwigRenderer` into the `FormExtension`.
+ * [BC BREAK] Registering the `FormExtension` without configuring a runtime loader for the `TwigRenderer` 
+   doesn't work anymore.
+   
+   Before:
+
+   ```php
+   use Symfony\Bridge\Twig\Extension\FormExtension;
+   use Symfony\Bridge\Twig\Form\TwigRenderer;
+   use Symfony\Bridge\Twig\Form\TwigRendererEngine;
+
+   // ...
+   $rendererEngine = new TwigRendererEngine(array('form_div_layout.html.twig'));
+   $rendererEngine->setEnvironment($twig);
+   $twig->addExtension(new FormExtension(new TwigRenderer($rendererEngine, $csrfTokenManager)));
+   ```
+
+   After:
+
+   ```php
+   // ...
+   $rendererEngine = new TwigRendererEngine(array('form_div_layout.html.twig'), $twig);
+   // require Twig 1.30+
+   $twig->addRuntimeLoader(new \Twig_FactoryRuntimeLoader(array(
+       TwigRenderer::class => function () use ($rendererEngine, $csrfTokenManager) {
+           return new TwigRenderer($rendererEngine, $csrfTokenManager);
+       },
+   )));
+   $twig->addExtension(new FormExtension());
+   ```
+ * Deprecated the `TwigRendererEngineInterface` interface.
+
+2.7.0
+-----
+
+ * added LogoutUrlExtension (provides `logout_url` and `logout_path`)
+ * added an HttpFoundation extension (provides the `absolute_url` and the `relative_path` functions)
+ * added AssetExtension (provides the `asset` and `asset_version` functions)
+ * Added possibility to extract translation messages from a file or files besides extracting from a directory
+
 2.5.0
 -----
 

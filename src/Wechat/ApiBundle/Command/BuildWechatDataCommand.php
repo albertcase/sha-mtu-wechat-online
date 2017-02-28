@@ -13,17 +13,24 @@ use Symfony\Component\Filesystem\Filesystem;
 class BuildWechatDataCommand extends Command{
 
   protected function configure(){
-    $this->setName('wechat:update.wechatdata')
-        ->setDescription('Update Wechat Data. path:web/upload/wechatcache');
+    $this->setName('wechat:renew.wechatdata')
+        ->setDescription('Update Wechat Data. path:web/upload/wechatcache')
+        ->addArgument('path',
+          InputArgument::OPTIONAL,
+          'cache file path'
+        );
   }
 
   protected function execute(InputInterface $input, OutputInterface $output)
   {
     $fs = new Filesystem();
     $path = dirname(__FILE__).'/../../../../web/upload/wechatcache';
+    if($in_path = $input->getArgument('path'))
+      $path = $in_path;
+    $path = realpath($path);
     if(!$fs->exists($path));
       $fs->mkdir($path);
-    $_db = $this->getApplication()->getKernel()->getContainer()->get('my.dataSql');
+    $_db = $this->getApplication()->getKernel()->getContainer()->get('my.LdataSql');
     $lsa = $_db->searchData(array() ,array(), 'wechat_feedbacks');
     $lsb = $_db->searchData(array() ,array(), 'wechat_events');
     $feedbacks = array();
@@ -104,17 +111,26 @@ class BuildWechatDataCommand extends Command{
     ob_end_clean();
     $fs->dumpFile($path."/stores.php", $string.";");
 // jssdkids
-    $jssdk = $this->getApplication()->getKernel()->getContainer()->getParameter('wechat_jssdkids');
-    $stores = array();
-      if($jssdk)
-        $stores = $jssdk;
+    $list = $this->getApplication()->getKernel()->getContainer()->get('my.dataSql')->searchData(array(), array(), 'wechat_jssdk');
+$parm = array();
+if($list && isset($list['0'])){
+  foreach($list as $l){
+    $parm[$l['jsfilename']] = $l;
+  }
+}
+$parm['60c4349e-c302-4313-9fa8-37a8ebd59853'] = array(
+  'jsfilename' => '60c4349e-c302-4313-9fa8-37a8ebd59853',
+  'domain' => $this->getApplication()->getKernel()->getContainer()->getParameter('hostdomain'),
+  'jscontent' => '',
+  'name' => 'host'
+);
     ob_start();
     print "<?php\nreturn ";
-    var_export($stores);
+    var_export($parm);
     $string = ob_get_contents();
     ob_end_clean();
     $fs->dumpFile($path."/jssdkids.php", $string.";");
-    $output->writeln('<info>update wechat data success, Path:web/upload/wechatcache</info>');
+    $output->writeln('<info>update wechat data success, Path:'.$path.'</info>');
   }
 
 }

@@ -2,7 +2,6 @@
 
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Container;
-use Symfony\Component\DependencyInjection\Exception\InactiveScopeException;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\LogicException;
 use Symfony\Component\DependencyInjection\Exception\RuntimeException;
@@ -18,16 +17,16 @@ use Symfony\Component\DependencyInjection\ParameterBag\FrozenParameterBag;
  */
 class LazyServiceProjectServiceContainer extends Container
 {
+    protected $methodMap = array(
+        'foo' => 'getFooService',
+    );
+
     /**
      * Constructor.
      */
     public function __construct()
     {
-        $this->services =
-        $this->scopedServices =
-        $this->scopeStacks = array();
-        $this->scopes = array();
-        $this->scopeChildren = array();
+        $this->services = array();
     }
 
     /**
@@ -38,16 +37,14 @@ class LazyServiceProjectServiceContainer extends Container
      *
      * @param bool $lazyLoad whether to try lazy-loading the service with a proxy
      *
-     * @return stdClass A stdClass instance.
+     * @return stdClass A stdClass instance
      */
     public function getFooService($lazyLoad = true)
     {
         if ($lazyLoad) {
-            $container = $this;
-
             return $this->services['foo'] = new stdClass_c1d194250ee2e2b7d2eab8b8212368a8(
-                function (&$wrappedInstance, \ProxyManager\Proxy\LazyLoadingInterface $proxy) use ($container) {
-                    $wrappedInstance = $container->getFooService(false);
+                function (&$wrappedInstance, \ProxyManager\Proxy\LazyLoadingInterface $proxy) {
+                    $wrappedInstance = $this->getFooService(false);
 
                     $proxy->setProxyInitializer(null);
 

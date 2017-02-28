@@ -28,7 +28,7 @@ class materiallist extends FormRequest{
       $this->getdata['id'] = intval($this->getdata['id']);
       $where = "WHERE id".(($this->getdata['order'] == 'bottom')?"<":">").$this->getdata['id'];
     }
-    $sql = "SELECT `id`,`title`,`digest`,`url`,`thumb_url` FROM wechat_material {$where} ORDER BY `id` DESC LIMIT 5";
+    $sql = "SELECT `id`,`title`,`digest`,`url`,`thumb_url` FROM wechat_material_news {$where} ORDER BY `id` DESC LIMIT 5";
     $list = $this->container->get('my.dataSql')->querysql($sql);
     if($list && isset($list['0']))
       return array('code' => '10' ,'msg' => 'get success', 'list' => $list);

@@ -13,7 +13,8 @@ class PageController extends Controller
     if(!$w = $sql->getArticlelist(array())){
       $w = array();
     }
-    $host = $this->getRequest()->getSchemeAndHttpHost();
+    // $host = $this->getRequest()->getSchemeAndHttpHost();//2.6
+    $host = $this->container->get('request_stack')->getCurrentRequest()->getSchemeAndHttpHost();//2.8
     return $this->render('ArticleBundle:Page:pag.html.twig', array('list' => $w, 'host' => $host));
   }
 

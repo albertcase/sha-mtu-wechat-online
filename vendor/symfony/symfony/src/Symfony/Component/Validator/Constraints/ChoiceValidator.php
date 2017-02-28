@@ -22,8 +22,6 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Florian Eckerstorfer <florian@eckerstorfer.org>
  * @author Bernhard Schussek <bschussek@gmail.com>
- *
- * @api
  */
 class ChoiceValidator extends ConstraintValidator
 {
@@ -49,7 +47,8 @@ class ChoiceValidator extends ConstraintValidator
         }
 
         if ($constraint->callback) {
-            if (!is_callable($choices = array($this->context->getClassName(), $constraint->callback))
+            if (!is_callable($choices = array($this->context->getObject(), $constraint->callback))
+                && !is_callable($choices = array($this->context->getClassName(), $constraint->callback))
                 && !is_callable($choices = $constraint->callback)
             ) {
                 throw new ConstraintDefinitionException('The Choice constraint expects a valid callback');
@@ -59,10 +58,14 @@ class ChoiceValidator extends ConstraintValidator
             $choices = $constraint->choices;
         }
 
+        if (false === $constraint->strict) {
+            @trigger_error('Setting the strict option of the Choice constraint to false is deprecated since version 3.2 and will be removed in 4.0.', E_USER_DEPRECATED);
+        }
+
         if ($constraint->multiple) {
             foreach ($value as $_value) {
                 if (!in_array($_value, $choices, $constraint->strict)) {
-                    $this->buildViolation($constraint->multipleMessage)
+                    $this->context->buildViolation($constraint->multipleMessage)
                         ->setParameter('{{ value }}', $this->formatValue($_value))
                         ->setCode(Choice::NO_SUCH_CHOICE_ERROR)
                         ->setInvalidValue($_value)
@@ -75,7 +78,7 @@ class ChoiceValidator extends ConstraintValidator
             $count = count($value);
 
             if ($constraint->min !== null && $count < $constraint->min) {
-                $this->buildViolation($constraint->minMessage)
+                $this->context->buildViolation($constraint->minMessage)
                     ->setParameter('{{ limit }}', $constraint->min)
                     ->setPlural((int) $constraint->min)
                     ->setCode(Choice::TOO_FEW_ERROR)
@@ -85,7 +88,7 @@ class ChoiceValidator extends ConstraintValidator
             }
 
             if ($constraint->max !== null && $count > $constraint->max) {
-                $this->buildViolation($constraint->maxMessage)
+                $this->context->buildViolation($constraint->maxMessage)
                     ->setParameter('{{ limit }}', $constraint->max)
                     ->setPlural((int) $constraint->max)
                     ->setCode(Choice::TOO_MANY_ERROR)
@@ -94,7 +97,7 @@ class ChoiceValidator extends ConstraintValidator
                 return;
             }
         } elseif (!in_array($value, $choices, $constraint->strict)) {
-            $this->buildViolation($constraint->message)
+            $this->context->buildViolation($constraint->message)
                 ->setParameter('{{ value }}', $this->formatValue($value))
                 ->setCode(Choice::NO_SUCH_CHOICE_ERROR)
                 ->addViolation();

@@ -21,14 +21,14 @@ class NumberTypeTest extends TestCase
         parent::setUp();
 
         // we test against "de_DE", so we need the full implementation
-        IntlTestHelper::requireFullIntl($this);
+        IntlTestHelper::requireFullIntl($this, false);
 
         \Locale::setDefault('de_DE');
     }
 
     public function testDefaultFormatting()
     {
-        $form = $this->factory->create('number');
+        $form = $this->factory->create('Symfony\Component\Form\Extension\Core\Type\NumberType');
         $form->setData('12345.67890');
         $view = $form->createView();
 
@@ -37,16 +37,16 @@ class NumberTypeTest extends TestCase
 
     public function testDefaultFormattingWithGrouping()
     {
-        $form = $this->factory->create('number', null, array('grouping' => true));
+        $form = $this->factory->create('Symfony\Component\Form\Extension\Core\Type\NumberType', null, array('grouping' => true));
         $form->setData('12345.67890');
         $view = $form->createView();
 
         $this->assertSame('12.345,679', $view->vars['value']);
     }
 
-    public function testDefaultFormattingWithPrecision()
+    public function testDefaultFormattingWithScale()
     {
-        $form = $this->factory->create('number', null, array('precision' => 2));
+        $form = $this->factory->create('Symfony\Component\Form\Extension\Core\Type\NumberType', null, array('scale' => 2));
         $form->setData('12345.67890');
         $view = $form->createView();
 
@@ -55,7 +55,7 @@ class NumberTypeTest extends TestCase
 
     public function testDefaultFormattingWithRounding()
     {
-        $form = $this->factory->create('number', null, array('precision' => 0, 'rounding_mode' => \NumberFormatter::ROUND_UP));
+        $form = $this->factory->create('Symfony\Component\Form\Extension\Core\Type\NumberType', null, array('scale' => 0, 'rounding_mode' => \NumberFormatter::ROUND_UP));
         $form->setData('12345.54321');
         $view = $form->createView();
 

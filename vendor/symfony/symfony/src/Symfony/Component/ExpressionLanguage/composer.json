@@ -16,19 +16,19 @@
         }
     ],
     "require": {
-        "php": ">=5.3.3"
-    },
-    "require-dev": {
-        "symfony/phpunit-bridge": "~2.7"
+        "php": ">=5.5.9",
+        "symfony/cache": "~3.1"
     },
     "autoload": {
-        "psr-0": { "Symfony\\Component\\ExpressionLanguage\\": "" }
+        "psr-4": { "Symfony\\Component\\ExpressionLanguage\\": "" },
+        "exclude-from-classmap": [
+            "/Tests/"
+        ]
     },
-    "target-dir": "Symfony/Component/ExpressionLanguage",
     "minimum-stability": "dev",
     "extra": {
         "branch-alias": {
-            "dev-master": "2.6-dev"
+            "dev-master": "3.2-dev"
         }
     }
 }

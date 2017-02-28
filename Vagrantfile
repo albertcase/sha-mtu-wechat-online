@@ -4,11 +4,11 @@
 Vagrant.configure("2") do |config|
 
   config.vm.box = "ubuntu14.04-20150827"
-  config.vm.hostname = "valextra"
+  config.vm.hostname = "wechat-angular"
 
 
-  config.vm.network :forwarded_port, guest: 80, host: 8074
-  config.vm.network :forwarded_port, guest: 3306, host: 33074
+  config.vm.network :forwarded_port, guest: 80, host: 8076
+  config.vm.network :forwarded_port, guest: 3306, host: 33076
 
   config.vm.network :private_network, ip: "192.168.33.10"
 

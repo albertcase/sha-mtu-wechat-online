@@ -30,18 +30,28 @@ class qrcodeupdate extends FormRequest{
       $qrcodeinfo = $this->container->get('my.dataSql')->qrcodeinfo($this->getdata['id']);
       if($qrcodeinfo && isset($qrcodeinfo['0'])){
         $this->container->get('my.dataSql')->qrcodeUpdate(array('id' => $this->getdata['id']), array('qrName' => $this->getdata['qrName']));
-        if($event = $this->getevents($qrcodeinfo['0']['feedbackid'])){
-          $this->container->get('my.dataSql')->updateData(array('menuId' => $qrcodeinfo['0']['feedbackid']), $event, 'wechat_feedbacks');
+        $event = $this->getevents($qrcodeinfo['0']['feedbackid']);
+        if($this->container->get('my.dataSql')->searchData(array('menuId' => $qrcodeinfo['0']['feedbackid']), array('id'), 'wechat_feedbacks')){
+          if($event){
+            $this->container->get('my.dataSql')->updateData(array('menuId' => $qrcodeinfo['0']['feedbackid']), $event, 'wechat_feedbacks');
+          }else{
+            $this->container->get('my.dataSql')->deleteData(array('menuId' => $qrcodeinfo['0']['feedbackid']), 'wechat_feedbacks');
+          }
         }else{
-          $this->container->get('my.dataSql')->deleteData(array('menuId' => $qrcodeinfo['0']['feedbackid']), 'wechat_feedbacks');
-          $this->container->get('my.dataSql')->qrcodeUpdate(array('id' => $this->getdata['id']), array('feedbackid' => NULL));
+          if($event){
+            if(!$event['menuId']){
+             $event['menuId'] = 'qrcode'.uniqid();
+             $this->container->get('my.dataSql')->qrcodeUpdate(array('id' => $this->getdata['id']), array('feedbackid' => $event['menuId']));
+           }
+            $this->container->get('my.dataSql')->insertData($event, 'wechat_feedbacks');
+          }
         }
         return array('code' => '10', 'msg' => 'update success');
       }
-      return array('code' => '9', 'msg' => 'this qrcode not exists');
+      return array('code' => '10', 'msg' => 'this qrcode not exists');
   }
 
-  public function getevents(){
+  public function getevents($id){
     $events = array();
     if(!isset($this->getdata['MsgType']))
       return $events;
@@ -50,6 +60,7 @@ class qrcodeupdate extends FormRequest{
         'Content' => $this->getdata['Content'],
       );
       $events = array(
+        'menuId' => $id,
         'MsgType' => 'text',
         'MsgData' => json_encode($MsgData, JSON_UNESCAPED_UNICODE),
       );
@@ -60,6 +71,7 @@ class qrcodeupdate extends FormRequest{
         'Articles' => json_decode($this->getdata['newslist'] ,true),
       );
       $events = array(
+        'menuId' => $id,
         'MsgType' => 'news',
         'MsgData' => json_encode($MsgData, JSON_UNESCAPED_UNICODE),
       );

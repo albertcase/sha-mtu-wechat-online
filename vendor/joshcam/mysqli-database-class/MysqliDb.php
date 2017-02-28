@@ -7,10 +7,10 @@
  * @author    Jeffery Way <jeffrey@jeffrey-way.com>
  * @author    Josh Campbell <jcampbell@ajillion.com>
  * @author    Alexander V. Butenko <a.butenka@gmail.com>
- * @copyright Copyright (c) 2010
+ * @copyright Copyright (c) 2010-2016
  * @license   http://opensource.org/licenses/gpl-3.0.html GNU Public License
  * @link      http://github.com/joshcam/PHP-MySQLi-Database-Class 
- * @version   2.6
+ * @version   2.7
  */
 
 class MysqliDb
@@ -65,6 +65,13 @@ class MysqliDb
     protected $_where = array();
 
     /**
+     * An array that holds where join ands
+     *
+     * @var array
+     */
+    protected $_joinAnd = array();
+
+    /**
      * An array that holds having conditions
      * @var array
      */
@@ -81,7 +88,19 @@ class MysqliDb
      * @var array
      */
     protected $_groupBy = array();
-
+	
+	/**
+	 * Dynamic type list for tempromary locking tables. 
+	 * @var array
+	 */
+	protected $_tableLocks = array();
+	
+	/**
+	 * Variable which holds the current table lock method.
+	 * @var string
+	 */
+	protected $_tableLockMethod = "READ";
+	
     /**
      * Dynamic array that holds a combination of where condition/table data value types and parameter references
      * @var array
@@ -262,7 +281,7 @@ class MysqliDb
         $this->_mysqli = new mysqli($this->host, $this->username, $this->password, $this->db, $this->port);
 
         if ($this->_mysqli->connect_error) {
-            throw new Exception('Connect Error ' . $this->_mysqli->connect_errno . ': ' . $this->_mysqli->connect_error);
+            throw new Exception('Connect Error ' . $this->_mysqli->connect_errno . ': ' . $this->_mysqli->connect_error, $this->_mysqli->connect_errno);
         }
 
         if ($this->charset) {
@@ -311,6 +330,7 @@ class MysqliDb
         $this->_where = array();
         $this->_having = array();
         $this->_join = array();
+        $this->_joinAnd = array();
         $this->_orderBy = array();
         $this->_groupBy = array();
         $this->_bindParams = array(''); // Create the empty 0 index
@@ -373,6 +393,28 @@ class MysqliDb
         return $this;
     }
 
+	/**
+	 * Pushes a unprepared statement to the mysqli stack.
+	 * WARNING: Use with caution.
+	 * This method does not escape strings by default so make sure you'll never use it in production.
+	 * 
+	 * @author Jonas Barascu
+	 * @param [[Type]] $query [[Description]]
+	 */
+	private function queryUnprepared($query)
+	{	
+		// Execute query
+		$stmt = $this->mysqli()->query($query);
+
+		// Failed?
+		if(!$stmt){
+			throw new Exception("Unprepared Query Failed, ERRNO: ".$this->mysqli()->errno." (".$this->mysqli()->error.")", $this->mysqli()->errno);
+		};
+		
+		// return stmt for future use
+		return $stmt;
+	}
+	
     /**
      * Execute raw SQL query.
      *
@@ -638,6 +680,48 @@ class MysqliDb
     }
 
     /**
+     * Insert method to add several rows at once
+     *
+     * @param string $tableName The name of the table.
+     * @param array $multiInsertData Two-dimensinal Data-array containing information for inserting into the DB.
+     * @param array $dataKeys Optinal Table Key names, if not set in insertDataSet.
+     *
+     * @return bool|array Boolean indicating the insertion failed (false), else return id-array ([int])
+     */
+    public function insertMulti($tableName, array $multiInsertData, array $dataKeys = null)
+    {
+        // only auto-commit our inserts, if no transaction is currently running
+        $autoCommit = (isset($this->_transaction_in_progress) ? !$this->_transaction_in_progress : true);
+        $ids = array();
+
+        if($autoCommit) {
+            $this->startTransaction();
+        }
+
+        foreach ($multiInsertData as $insertData) {
+            if($dataKeys !== null) {
+                // apply column-names if given, else assume they're already given in the data
+                $insertData = array_combine($dataKeys, $insertData);
+            }
+
+            $id = $this->insert($tableName, $insertData);
+            if(!$id) {
+                if($autoCommit) {
+                    $this->rollback();
+                }
+                return false;
+            }
+            $ids[] = $id;
+        }
+
+        if($autoCommit) {
+            $this->commit();
+        }
+
+        return $ids;
+    }
+
+    /**
      * Replace method to add new row
      *
      * @param string $tableName The name of the table.
@@ -856,6 +940,123 @@ class MysqliDb
 
         return $this;
     }
+	
+	
+	/**
+	 * This is a basic method which allows you to import raw .CSV data into a table
+	 * Please check out http://dev.mysql.com/doc/refman/5.7/en/load-data.html for a valid .csv file.
+	 
+	 * @author Jonas Barascu (Noneatme)
+	 * @param string $importTable        The database table where the data will be imported into.
+	 * @param string $importFile         The file to be imported. Please use double backslashes \\ and make sure you
+	 * @param string $importSettings 	 An Array defining the import settings as described in the README.md
+	 * @return boolean
+	 */
+	public function loadData($importTable, $importFile, $importSettings = null)
+	{
+		// We have to check if the file exists
+		if(!file_exists($importFile)) {
+			// Throw an exception
+			throw new Exception("importCSV -> importFile ".$importFile." does not exists!");
+			return;
+		}
+		
+		// Define the default values
+		// We will merge it later
+		$settings 				= Array("fieldChar" => ';', "lineChar" => PHP_EOL, "linesToIgnore" => 1);
+		
+		// Check the import settings 
+		if(gettype($importSettings) == "array") {
+			// Merge the default array with the custom one
+			$settings = array_merge($settings, $importSettings);
+		}
+	
+		// Add the prefix to the import table
+		$table = self::$prefix . $importTable;
+		
+		// Add 1 more slash to every slash so maria will interpret it as a path
+		$importFile = str_replace("\\", "\\\\", $importFile);  
+		
+		// Build SQL Syntax
+		$sqlSyntax = sprintf('LOAD DATA INFILE \'%s\' INTO TABLE %s', 
+					$importFile, $table);
+		
+		// FIELDS
+		$sqlSyntax .= sprintf(' FIELDS TERMINATED BY \'%s\'', $settings["fieldChar"]);
+		if(isset($settings["fieldEnclosure"])) {
+			$sqlSyntax .= sprintf(' ENCLOSED BY \'%s\'', $settings["fieldEnclosure"]);
+		}
+		
+		// LINES
+		$sqlSyntax .= sprintf(' LINES TERMINATED BY \'%s\'', $settings["lineChar"]);
+		if(isset($settings["lineStarting"])) {
+			$sqlSyntax .= sprintf(' STARTING BY \'%s\'', $settings["lineStarting"]);
+		}
+			
+		// IGNORE LINES
+		$sqlSyntax .= sprintf(' IGNORE %d LINES', $settings["linesToIgnore"]);
+	
+		// Exceute the query unprepared because LOAD DATA only works with unprepared statements.
+		$result = $this->queryUnprepared($sqlSyntax);
+
+		// Are there rows modified?
+		// Let the user know if the import failed / succeeded
+		return (bool) $result;
+	}
+	
+	/**
+	 * This method is usefull for importing XML files into a specific table.
+	 * Check out the LOAD XML syntax for your MySQL server.
+	 *
+	 * @author Jonas Barascu
+	 * @param  string  $importTable    The table in which the data will be imported to.
+	 * @param  string  $importFile     The file which contains the .XML data.
+	 * @param  string  $importSettings An Array defining the import settings as described in the README.md
+	 *                                                                                           
+	 * @return boolean Returns true if the import succeeded, false if it failed.
+	 */
+	public function loadXml($importTable, $importFile, $importSettings = null)
+	{
+		// We have to check if the file exists
+		if(!file_exists($importFile)) {
+			// Does not exists
+			throw new Exception("loadXml: Import file does not exists");
+			return;
+		}
+		
+		// Create default values
+		$settings 			= Array("linesToIgnore" => 0);
+
+		// Check the import settings 
+		if(gettype($importSettings) == "array") {
+			$settings = array_merge($settings, $importSettings);
+		}
+
+		// Add the prefix to the import table
+		$table = self::$prefix . $importTable;
+		
+		// Add 1 more slash to every slash so maria will interpret it as a path
+		$importFile = str_replace("\\", "\\\\", $importFile);  
+		
+		// Build SQL Syntax
+		$sqlSyntax = sprintf('LOAD XML INFILE \'%s\' INTO TABLE %s', 
+								 $importFile, $table);
+		
+		// FIELDS
+		if(isset($settings["rowTag"])) {
+			$sqlSyntax .= sprintf(' ROWS IDENTIFIED BY \'%s\'', $settings["rowTag"]);
+		}
+			
+		// IGNORE LINES
+		$sqlSyntax .= sprintf(' IGNORE %d LINES', $settings["linesToIgnore"]);
+		
+		// Exceute the query unprepared because LOAD XML only works with unprepared statements.
+		$result = $this->queryUnprepared($sqlSyntax);
+
+		// Are there rows modified?
+		// Let the user know if the import failed / succeeded
+		return (bool) $result;
+	}
 
     /**
      * This method allows you to specify multiple (method chaining optional) ORDER BY statements for SQL queries.
@@ -913,7 +1114,125 @@ class MysqliDb
         $this->_groupBy[] = $groupByField;
         return $this;
     }
+	
+	
+	/**
+	 * This method sets the current table lock method.
+	 * 
+	 * @author Jonas Barascu
+	 * @param  string   $method The table lock method. Can be READ or WRITE.
+	 *                                                                 
+	 * @throws Exception
+	 * @return MysqliDb
+	 */
+	public function setLockMethod($method)
+	{
+		// Switch the uppercase string
+		switch(strtoupper($method)) {
+			// Is it READ or WRITE?
+			case "READ" || "WRITE":
+				// Succeed
+				$this->_tableLockMethod = $method;
+				break;
+			default:
+				// Else throw an exception
+				throw new Exception("Bad lock type: Can be either READ or WRITE");
+				break;
+		}
+		return $this;
+	}
+	
+	/**
+	 * Locks a table for R/W action.
+	 * 
+	 * @author Jonas Barascu
+	 * @param string  $table The table to be locked. Can be a table or a view.
+	 *                       
+	 * @throws Exception
+	 * @return MysqliDb if succeeeded;
+	 */
+	public function lock($table)
+	{
+		// Main Query
+		$this->_query = "LOCK TABLES";
+		
+		// Is the table an array?
+		if(gettype($table) == "array") {
+			// Loop trough it and attach it to the query
+			foreach($table as $key => $value) {
+				if(gettype($value) == "string") {
+					if($key > 0) {
+						$this->_query .= ",";
+					}
+					$this->_query .= " ".self::$prefix.$value." ".$this->_tableLockMethod;
+				}
+			}
+		}
+		else{
+			// Build the table prefix
+			$table = self::$prefix . $table;
+			
+			// Build the query
+			$this->_query = "LOCK TABLES ".$table." ".$this->_tableLockMethod;
+		}
 
+		// Exceute the query unprepared because LOCK only works with unprepared statements.
+		$result = $this->queryUnprepared($this->_query);
+        $errno  = $this->mysqli()->errno;
+			
+		// Reset the query
+		$this->reset();
+
+		// Are there rows modified?
+		if($result) {	
+			// Return true
+			// We can't return ourself because if one table gets locked, all other ones get unlocked!
+			return true;
+		}
+		// Something went wrong
+		else {
+			throw new Exception("Locking of table ".$table." failed", $errno);
+		}
+
+		// Return the success value
+		return false;
+	}
+	
+	/**
+	 * Unlocks all tables in a database.
+	 * Also commits transactions.
+	 * 
+	 * @author Jonas Barascu
+	 * @return MysqliDb
+	 */
+	public function unlock()
+	{
+		// Build the query
+		$this->_query = "UNLOCK TABLES";
+
+		// Exceute the query unprepared because UNLOCK and LOCK only works with unprepared statements.
+		$result = $this->queryUnprepared($this->_query);
+        $errno  = $this->mysqli()->errno;
+
+		// Reset the query
+		$this->reset();
+
+		// Are there rows modified?
+		if($result) {
+			// return self
+			return $this;
+		}
+		// Something went wrong
+		else {
+			throw new Exception("Unlocking of tables failed", $errno);
+		}
+		
+	
+		// Return self
+		return $this;
+	}
+
+	
     /**
      * This methods returns the ID of the last inserted item
      *
@@ -1081,6 +1400,7 @@ class MysqliDb
      */
     protected function _buildQuery($numRows = null, $tableData = null)
     {
+        // $this->_buildJoinOld();
         $this->_buildJoin();
         $this->_buildInsertQuery($tableData);
         $this->_buildCondition('WHERE', $this->_where);
@@ -1229,7 +1549,7 @@ class MysqliDb
      * 
      * @return void
      */
-    protected function _buildJoin()
+    protected function _buildJoinOld()
     {
         if (empty($this->_join)) {
             return;
@@ -1494,8 +1814,9 @@ class MysqliDb
     {
         if (!$stmt = $this->mysqli()->prepare($this->_query)) {
             $msg = $this->mysqli()->error . " query: " . $this->_query;
+            $num = $this->mysqli()->errno;
             $this->reset();
-            throw new Exception($msg);
+            throw new Exception($msg, $num);
         }
 
         if ($this->traceEnabled) {
@@ -1905,6 +2226,106 @@ class MysqliDb
         $res = $this->withTotalCount()->get ($table, Array ($offset, $this->pageLimit), $fields);
         $this->totalPages = ceil($this->totalCount / $this->pageLimit);
         return $res;
+    }
+
+    /**
+     * This method allows you to specify multiple (method chaining optional) AND WHERE statements for the join table on part of the SQL query.
+     *
+     * @uses $dbWrapper->joinWhere('user u', 'u.id', 7)->where('user u', 'u.title', 'MyTitle');
+     *
+     * @param string $whereJoin  The name of the table followed by its prefix.
+     * @param string $whereProp  The name of the database field.
+     * @param mixed  $whereValue The value of the database field.
+     *
+     * @return dbWrapper
+     */
+    public function joinWhere($whereJoin, $whereProp, $whereValue = 'DBNULL', $operator = '=', $cond = 'AND')
+    {
+        $this->_joinAnd[$whereJoin][] = Array ($cond, $whereProp, $operator, $whereValue);
+        return $this;
+    }
+
+    /**
+     * This method allows you to specify multiple (method chaining optional) OR WHERE statements for the join table on part of the SQL query.
+     *
+     * @uses $dbWrapper->joinWhere('user u', 'u.id', 7)->where('user u', 'u.title', 'MyTitle');
+     *
+     * @param string $whereJoin  The name of the table followed by its prefix.
+     * @param string $whereProp  The name of the database field.
+     * @param mixed  $whereValue The value of the database field.
+     *
+     * @return dbWrapper
+     */
+    public function joinOrWhere($whereJoin, $whereProp, $whereValue = 'DBNULL', $operator = '=', $cond = 'AND')
+    {
+        return $this->joinWhere($whereJoin, $whereProp, $whereValue, $operator, 'OR');
+    }
+
+    /**
+     * Abstraction method that will build an JOIN part of the query
+     */
+    protected function _buildJoin () {
+        if (empty ($this->_join))
+            return;
+
+        foreach ($this->_join as $data) {
+            list ($joinType,  $joinTable, $joinCondition) = $data;
+
+            if (is_object ($joinTable))
+                $joinStr = $this->_buildPair ("", $joinTable);
+            else
+                $joinStr = $joinTable;
+
+            $this->_query .= " " . $joinType. " JOIN " . $joinStr ." on " . $joinCondition;
+
+            // Add join and query
+            if (!empty($this->_joinAnd) && isset($this->_joinAnd[$joinStr])) {
+                foreach($this->_joinAnd[$joinStr] as $join_and_cond) {
+                    list ($concat, $varName, $operator, $val) = $join_and_cond;
+                    $this->_query .= " " . $concat ." " . $varName;
+                    $this->conditionToSql($operator, $val);
+                }
+            }
+        }
+    }
+
+    /**
+     * Convert a condition and value into the sql string
+     * @param  String $operator The where constraint operator
+     * @param  String $val    The where constraint value
+     */
+    private function conditionToSql($operator, $val) {
+        switch (strtolower ($operator)) {
+            case 'not in':
+            case 'in':
+                $comparison = ' ' . $operator. ' (';
+                if (is_object ($val)) {
+                    $comparison .= $this->_buildPair ("", $val);
+                } else {
+                    foreach ($val as $v) {
+                        $comparison .= ' ?,';
+                        $this->_bindParam ($v);
+                    }
+                }
+                $this->_query .= rtrim($comparison, ',').' ) ';
+                break;
+            case 'not between':
+            case 'between':
+                $this->_query .= " $operator ? AND ? ";
+                $this->_bindParams ($val);
+                break;
+            case 'not exists':
+            case 'exists':
+                $this->_query.= $operator . $this->_buildPair ("", $val);
+                break;
+            default:
+                if (is_array ($val))
+                    $this->_bindParams ($val);
+                else if ($val === null)
+                    $this->_query .= $operator . " NULL";
+                else if ($val != 'DBNULL' || $val == '0')
+                    $this->_query .= $this->_buildPair ($operator, $val);
+        }
     }
 }
 

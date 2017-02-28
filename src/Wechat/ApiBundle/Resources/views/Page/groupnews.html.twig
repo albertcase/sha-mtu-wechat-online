@@ -8,39 +8,11 @@
          GROUP NEWS
    </div>
    <div class="panel-body" id="groupnewspanel">
-{% for x in newslist %}
-<div style="float:left;padding:20px">
-  <div class="newscard">
-    <div>
-      <div>
-        <ul>
-{% set y = 0 %}
-{% for xx in x['content']['news_item'] %}
-{% if y == 0 %}
-          <li  style="background-repeat: no-repeat;background-size:cover;background-image:url('{{ x['content']['news_item'][y]['thumb_url']|e }}')">
-            <p>{{ x['content']['news_item'][y]['title']|e }}</p>
-            <a href="{{ x['content']['news_item'][y]['url']|e }}" target="_blank">点击预览</a>
-          </li>
-{% else %}
-          <li>
-            <p>{{ x['content']['news_item'][y]['title']|e }}</p>
-            <img src="{{ x['content']['news_item'][y]['thumb_url']|e }}" />
-            <a href="{{ x['content']['news_item'][y]['url']|e }}" target="_blank">点击预览</a>
-          </li>
-{% endif %}
-{% set y = y + 1 %}
-{% endfor %}
-        </ul>
-      </div>
-    </div>
-    <div>
-      <button type="button" class="btn btn-primary groupnewssend" media-id="{{ x['media_id']|e }}" >
-         Group Send
-      </button>
-    </div>
-  </div>
-</div>
-{% endfor %}
+     <button class="groupnews-sync btn btn-default btn-xs">sync online</button>
+     <div class="groupnews-content" id="groupnewscontent">
+<!-- groupnewscontent -->
+     </div>
+     <button class="groupnews-renew btn btn-default btn-xs"><i class="fa fa-chevron-down"></i></button>
     </div>
 </div>
 <!-- popup -->
@@ -81,4 +53,9 @@
    </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 <!-- popup end -->
+<script>
+$(document).ready(function() {
+  groupnews.ajaxloadnewslist();
+});
+</script>
 {% endblock %}

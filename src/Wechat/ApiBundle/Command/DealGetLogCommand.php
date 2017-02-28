@@ -37,13 +37,13 @@ class DealGetLogCommand extends Command{
   }
 
   protected function GetNextRow($start_id){
-    $db = $this->getApplication()->getKernel()->getContainer()->get('my.dataSql');
+    $db = $this->getApplication()->getKernel()->getContainer()->get('my.LdataSql');
     $sql = "SELECT `id`,`msgXml`,`createTime` FROM `wechat_getmsglog` WHERE id>{$start_id} LIMIT 1";
     return $db->querysql($sql);
   }
 
   protected function DealRow($start_id){
-    $db = $this->getApplication()->getKernel()->getContainer()->get('my.dataSql');
+    $db = $this->getApplication()->getKernel()->getContainer()->get('my.LdataSql');
     while ($result = $this->GetNextRow($start_id)) {
       if($result && isset($result['0'])){
         $postObj = simplexml_load_string($result['0']['msgXml'], 'SimpleXMLElement', LIBXML_NOCDATA);
@@ -67,7 +67,7 @@ class DealGetLogCommand extends Command{
   }
 
   protected function request_event($postObj, $id){
-    $this->getApplication()->getKernel()->getContainer()->get('my.dataSql')->insertData(
+    $this->getApplication()->getKernel()->getContainer()->get('my.LdataSql')->insertData(
     array(
       'analyseid' => $id,
       'Event' => $this->GetObjStr($postObj, 'Event'),
@@ -77,7 +77,7 @@ class DealGetLogCommand extends Command{
   }
 
   protected function request_image($postObj, $id){
-    $this->getApplication()->getKernel()->getContainer()->get('my.dataSql')->insertData(
+    $this->getApplication()->getKernel()->getContainer()->get('my.LdataSql')->insertData(
     array(
       'analyseid' => $id,
       'PicUrl' => $this->GetObjStr($postObj, 'PicUrl'),
@@ -86,7 +86,7 @@ class DealGetLogCommand extends Command{
   }
 
   protected function request_link($postObj, $id){
-    $this->getApplication()->getKernel()->getContainer()->get('my.dataSql')->insertData(
+    $this->getApplication()->getKernel()->getContainer()->get('my.LdataSql')->insertData(
     array(
       'analyseid' => $id,
       'Title' => $this->GetObjStr($postObj, 'Title'),
@@ -96,7 +96,7 @@ class DealGetLogCommand extends Command{
   }
 
   protected function request_location($postObj, $id){
-    $this->getApplication()->getKernel()->getContainer()->get('my.dataSql')->insertData(
+    $this->getApplication()->getKernel()->getContainer()->get('my.LdataSql')->insertData(
     array(
       'analyseid' => $id,
       'Location_X' => $this->GetObjStr($postObj, 'Location_X'),
@@ -107,7 +107,7 @@ class DealGetLogCommand extends Command{
   }
 
   protected function request_text($postObj, $id){
-    $this->getApplication()->getKernel()->getContainer()->get('my.dataSql')->insertData(
+    $this->getApplication()->getKernel()->getContainer()->get('my.LdataSql')->insertData(
     array(
       'analyseid' => $id,
       'Content' => $this->GetObjStr($postObj, 'Content'),
@@ -115,7 +115,7 @@ class DealGetLogCommand extends Command{
   }
 
   protected function request_video($postObj, $id){
-    $this->getApplication()->getKernel()->getContainer()->get('my.dataSql')->insertData(
+    $this->getApplication()->getKernel()->getContainer()->get('my.LdataSql')->insertData(
     array(
       'analyseid' => $id,
       'MediaId' => $this->GetObjStr($postObj, 'MediaId'),
@@ -124,7 +124,7 @@ class DealGetLogCommand extends Command{
   }
 
   protected function request_voice($postObj, $id){
-    $this->getApplication()->getKernel()->getContainer()->get('my.dataSql')->insertData(
+    $this->getApplication()->getKernel()->getContainer()->get('my.LdataSql')->insertData(
     array(
       'analyseid' => $id,
       'MediaId' => $this->GetObjStr($postObj, 'MediaId'),

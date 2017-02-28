@@ -11,7 +11,7 @@
 
 namespace Symfony\Bundle\WebProfilerBundle\DependencyInjection;
 
-use Symfony\Component\HttpKernel\DependencyInjection\Extension;
+use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Config\FileLocator;
@@ -52,6 +52,24 @@ class WebProfilerExtension extends Extension
             $container->setParameter('web_profiler.debug_toolbar.intercept_redirects', $config['intercept_redirects']);
             $container->setParameter('web_profiler.debug_toolbar.mode', $config['toolbar'] ? WebDebugToolbarListener::ENABLED : WebDebugToolbarListener::DISABLED);
         }
+
+        $baseDir = array();
+        $rootDir = $container->getParameter('kernel.root_dir');
+        $rootDir = explode(DIRECTORY_SEPARATOR, realpath($rootDir) ?: $rootDir);
+        $bundleDir = explode(DIRECTORY_SEPARATOR, __DIR__);
+        for ($i = 0; isset($rootDir[$i], $bundleDir[$i]); ++$i) {
+            if ($rootDir[$i] !== $bundleDir[$i]) {
+                break;
+            }
+            $baseDir[] = $rootDir[$i];
+        }
+        $baseDir = implode(DIRECTORY_SEPARATOR, $baseDir);
+
+        $profilerController = $container->getDefinition('web_profiler.controller.profiler');
+        $profilerController->replaceArgument(6, $baseDir);
+
+        $fileLinkFormatter = $container->getDefinition('debug.file_link_formatter');
+        $fileLinkFormatter->replaceArgument(2, $baseDir);
     }
 
     /**

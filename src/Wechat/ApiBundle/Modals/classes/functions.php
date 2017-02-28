@@ -177,14 +177,14 @@ class functions{
   }
 
   public function allowjssdk($url){
-    // $allow = array(
-    //   'keringwechat.samesamechina.com',
-    //   'keringrecruitment.samesamechina.com'
-    // );
-    // foreach($allow as $x){
-    //   if(preg_match("/^http:\/\/".$x."/i", $url))
+    $allow = array(
+      'keringwechat.samesamechina.com',
+      'keringrecruitment.samesamechina.com'
+    );
+    foreach($allow as $x){
+      if(preg_match("/^http:\/\/".$x."/i", $url))
       return true;
-    // }
-    // return false;
+    }
+    return false;
   }
 }

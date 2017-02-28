@@ -15,7 +15,7 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormView;
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
  * Encapsulates common logic of {@link FormType} and {@link ButtonType}.
@@ -77,7 +77,7 @@ abstract class BaseType extends AbstractType
 
         $blockPrefixes = array();
         for ($type = $form->getConfig()->getType(); null !== $type; $type = $type->getParent()) {
-            array_unshift($blockPrefixes, $type->getName());
+            array_unshift($blockPrefixes, $type->getBlockPrefix());
         }
         $blockPrefixes[] = $uniqueBlockPrefix;
 
@@ -100,14 +100,14 @@ abstract class BaseType extends AbstractType
             // collection form have different types (dynamically), they should
             // be rendered differently.
             // https://github.com/symfony/symfony/issues/5038
-            'cache_key' => $uniqueBlockPrefix.'_'.$form->getConfig()->getType()->getName(),
+            'cache_key' => $uniqueBlockPrefix.'_'.$form->getConfig()->getType()->getBlockPrefix(),
         ));
     }
 
     /**
      * {@inheritdoc}
      */
-    public function setDefaultOptions(OptionsResolverInterface $resolver)
+    public function configureOptions(OptionsResolver $resolver)
     {
         $resolver->setDefaults(array(
             'block_name' => null,
@@ -119,8 +119,6 @@ abstract class BaseType extends AbstractType
             'auto_initialize' => true,
         ));
 
-        $resolver->setAllowedTypes(array(
-            'attr' => 'array',
-        ));
+        $resolver->setAllowedTypes('attr', 'array');
     }
 }

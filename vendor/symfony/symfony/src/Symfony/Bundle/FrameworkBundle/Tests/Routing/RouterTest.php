@@ -28,16 +28,18 @@ class RouterTest extends \PHPUnit_Framework_TestCase
             ),
             array(
                 '_locale' => 'en|es',
-            )
+            ), array(), '', array(), array(), '"%foo%" == "bar"'
         ));
 
         $sc = $this->getServiceContainer($routes);
         $sc->setParameter('locale', 'es');
+        $sc->setParameter('foo', 'bar');
 
         $router = new Router($sc, 'foo');
 
         $this->assertSame('/en', $router->generate('foo', array('_locale' => 'en')));
         $this->assertSame('/', $router->generate('foo', array('_locale' => 'es')));
+        $this->assertSame('"bar" == "bar"', $router->getRouteCollection()->get('foo')->getCondition());
     }
 
     public function testDefaultsPlaceholders()
@@ -129,6 +131,20 @@ class RouterTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    /**
+     * @expectedException \Symfony\Component\DependencyInjection\Exception\RuntimeException
+     * @expectedExceptionMessage Using "%env(FOO)%" is not allowed in routing configuration.
+     */
+    public function testEnvPlaceholders()
+    {
+        $routes = new RouteCollection();
+
+        $routes->add('foo', new Route('/%env(FOO)%'));
+
+        $router = new Router($this->getServiceContainer($routes), 'foo');
+        $router->getRouteCollection();
+    }
+
     public function testHostPlaceholders()
     {
         $routes = new RouteCollection();
@@ -212,7 +228,7 @@ class RouterTest extends \PHPUnit_Framework_TestCase
      */
     private function getServiceContainer(RouteCollection $routes)
     {
-        $loader = $this->getMock('Symfony\Component\Config\Loader\LoaderInterface');
+        $loader = $this->getMockBuilder('Symfony\Component\Config\Loader\LoaderInterface')->getMock();
 
         $loader
             ->expects($this->any())
@@ -220,7 +236,7 @@ class RouterTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($routes))
         ;
 
-        $sc = $this->getMock('Symfony\\Component\\DependencyInjection\\Container', array('get'));
+        $sc = $this->getMockBuilder('Symfony\\Component\\DependencyInjection\\Container')->setMethods(array('get'))->getMock();
 
         $sc
             ->expects($this->once())

@@ -1,8 +1,8 @@
 <?php
 return array(
   'TOKEN' => 'same_wechat_samesamechina',
-  'appid' => 'wxdffb071f687633b8',
-  'secret' => '216b4e8fa0127aa9b8abaa7ce8fa524e',
+  'appid' => 'wxdffb071f687633b8aaa',
+  'secret' => '216b4e8fa0127aa9b8abaa7ce8fa524eaaa',
   'prostr' => 'valentino:',
   'token_time' => 'valentino:token_time',
   'access_token' => 'valentino:access_token',

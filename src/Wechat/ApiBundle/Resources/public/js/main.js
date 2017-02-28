@@ -223,6 +223,106 @@ var popup = {
 
 
 var htmlconetnt = {
+  mediachoose: "",
+  ObjMedialist: null,
+  ObjMedialistSub: null,
+  ObjMedialistEdit: null,
+  ajaxloadmedialist: function(itime){
+    popup.openloading();
+    var pdata = {};
+    if(itime)
+      pdata = {
+        timestamp: itime,
+        order: "bottom"
+      };
+    $.ajax({
+      url:"/wechat/newsget",
+      type:"post",
+      dataType:'json',
+      data: pdata,
+      success:function(data){
+        popup.closeloading();
+        if(data.code == '10'){
+          var obj = "ObjMedialist" + htmlconetnt.mediachoose;
+          $(htmlconetnt[obj]['0']).append(htmlconetnt.mdeiacontent(data.list));
+        }
+        popup.openwarning(data.msg);
+      },
+      error:function(){
+        popup.closeloading();
+        popup.openwarning('unknow errors');
+      }
+    });
+  },
+  mdeiacontent: function(data){
+    var a = "";
+    var obj = "ObjMedialist" + htmlconetnt.mediachoose;
+    var contentname = "msgnewradio" + htmlconetnt.mediachoose;
+    for (var x in data){
+      if(htmlconetnt[obj].children("[newsid='" + x + "']").length)
+       continue;
+      var la = data[x].length;
+      var updatetime = 0;
+      if(la>0)
+        updatetime = data[x]['0']["update_time"];
+      a += '<div class="msg-mediacard" newstime="'+updatetime+'" newsid="' + x + '">';
+      a += '<input type="radio" class="msgnewradio"  name="' + contentname + '" id="r'+ contentname + x+'" value="'+x+'" />';
+      a += '<div class="msgnewul">';
+      a += '<ul>';
+      if(la>0){
+        a += '<li style="background-repeat: no-repeat;background-size:cover;background-image:url('+"'/cimg.php?style=w_400&amp;image="+encodeURIComponent(data[x]['0']['thumb_url'])+"'"+')">';
+        a += '<p>'+data[x]['0']['title']+'</p>';
+        a += '<a href="'+data[x]['0']['url']+'" target="_blank">点击预览</a>';
+        a += '</li>';
+      }
+      for(var i=1; i<la; i++){
+        a += '<li>'
+        a += '<p>'+data[x][i]['title']+'</p>';
+        a += '<img src="/cimg.php?style=w_400&amp;image='+encodeURIComponent(data[x][i]['thumb_url'])+'">';
+        a += '<a href="'+data[x][i]['url']+'" target="_blank">点击预览</a>';
+        a += '</li>';
+      }
+      a += '</ul>';
+      a += '</div>';
+      a += '<div class="msgnewbutton"><label for="r' + contentname + x+'" class="label"><i class="fa fa-check"></i><i class="msg-check">Pick</i></button></div>';
+      a += '</div>';
+    }
+    return a;
+  },
+  amediamessage: function(info){
+    htmlconetnt.mediachoose = "Edit";
+    var a = '<div class="msg-conetnt"></div>';
+    a += '<button class="msg-renew btn btn-default btn-xs"><i class="fa fa-chevron-down"></i></button>';
+    var obj = "ObjMedialist" + htmlconetnt.mediachoose;
+    htmlconetnt[obj] = $(a);
+    $(htmlconetnt[obj]['1']).click(function(){
+      var obj = "ObjMedialist" + htmlconetnt.mediachoose;
+      var itime = $(htmlconetnt[obj]['0']).children('.msg-mediacard').last().attr('newstime');
+      htmlconetnt.ajaxloadmedialist(itime);
+    });
+    $(htmlconetnt[obj]['0']).append(htmlconetnt.mdeiacontent(info));
+    $(htmlconetnt[obj]['0']).children(".msg-mediacard").eq(0).attr("newstime", "9999999999");
+    $(htmlconetnt[obj]['0']).find("input").eq(0).prop("checked", true);
+    return htmlconetnt[obj];
+  },
+  mediamessage: function(name){
+    htmlconetnt.mediachoose = "";
+    if(name)
+      htmlconetnt.mediachoose = name;
+    var obj = "ObjMedialist" + htmlconetnt.mediachoose;
+    if(!htmlconetnt[obj]){
+      var a = '<div class="msg-conetnt"></div>';
+      a += '<button class="msg-renew btn btn-default btn-xs"><i class="fa fa-chevron-down"></i></button>';
+      htmlconetnt[obj] = $(a);
+      htmlconetnt.ajaxloadmedialist();
+    }
+    $(htmlconetnt[obj]['1']).click(function(){
+      var obj = "ObjMedialist" + htmlconetnt.mediachoose;
+      var itime = $(htmlconetnt[obj]['0']).children('.msg-mediacard').last().attr('newstime');
+      htmlconetnt.ajaxloadmedialist(itime);
+    });
+    return htmlconetnt[obj];
+  },
   locationmessage: function(){
     var a = "<br><b>Send your location</b>";
     return a;
@@ -450,7 +550,7 @@ var menu = {
     var self = this;
     var action = obj.attr('action');
     if($("#submenu ."+action+" div").length == 0)
-      $("#submenu ."+action).html(htmlconetnt[action]());
+      $("#submenu ."+action).html(htmlconetnt[action]("Sub"));
     $("#submenu .menushow").removeClass("menushow");
     $("#submenu ."+action).addClass("menushow");
     self.subbuttonfun = "sub"+action;
@@ -459,10 +559,21 @@ var menu = {
     var self = this;
     var action = obj.attr('action');
     if($("#editmenu ."+action+" div").length == 0)
-      $("#editmenu ."+action).html(htmlconetnt[action]());
+      $("#editmenu ."+action).html(htmlconetnt[action]("Edit"));
     $("#editmenu .menushow").removeClass("menushow");
     $("#editmenu ."+action).addClass("menushow");
     self.editbuttonfun = "edit"+action;
+  },
+  mmediamessage: function(){//AAAAAAAAAAAAA
+    var mid = $("#myModal .msgnewradio:checked").val();
+    if(!mid)
+      mid = "";
+    var a={
+      "buttonaddm[menuName]": $("#myModal .menuname").val(),
+      "buttonaddm[eventtype]": 'media_id',
+      "buttonaddm[eventmedia_id]": mid,
+    };
+    return a;
   },
   mnone:function(){
     var a={
@@ -542,6 +653,18 @@ var menu = {
     };
     return a;
   },
+  submediamessage: function(){
+    var mid = $("#submenu .msgnewradio:checked").val();
+    if(!mid)
+      mid = "";
+    var a={
+      "buttonaddsub[menuName]": $("#submenu .menuname").val(),
+      "buttonaddsub[mOrder]": $("#submenu .belongto").val(),
+      "buttonaddsub[eventtype]": 'media_id',
+      "buttonaddsub[eventmedia_id]": mid,
+    };
+    return a;
+  },
   subpushmessage:function(){
     var self = this;
     var key = new Date().getTime();
@@ -587,6 +710,19 @@ var menu = {
     };
     return a;
   },
+  editmediamessage: function(){//AAAAAAAAAAA
+    var self = this;
+    var mid = $("#editmenu .msgnewradio:checked").val();
+    if(!mid)
+      mid = "";
+    var a={
+      "buttonupdate[id]": self.editinfo['id'],
+      "buttonupdate[menuName]": $("#editmenu .menuname").val(),
+      "buttonupdate[eventtype]": 'media_id',
+      "buttonupdate[eventmedia_id]": mid,
+    };
+    return a;
+  },
   editpushmessage:function(){
     var self = this;
     var key;
@@ -623,7 +759,7 @@ var menu = {
     };
     return a;
   },
-  editlocationmessage:function(){//aaaaaaaaa
+  editlocationmessage:function(){
     var key = new Date().getTime();
     var self = this;
     var a={
@@ -864,6 +1000,14 @@ var menu = {
       $("#editmenu .buttontype .btn").eq(0).addClass("active");
       $("#editmenu .externalpage").html(htmlconetnt.aview(data['eventUrl']));
       self.editbuttonfun = "editexternalpage";
+      return true;
+    }
+    if(data['eventtype'] == 'media_id'){//AAAAAAAAAAA
+      $("#editmenu .mediamessage").addClass("menushow");
+      $("#editmenu .buttontype [MsgType='media_id']").addClass("active");
+      var info = data.hasOwnProperty("eventmedia_info")?data['eventmedia_info']:[];
+      $("#editmenu .mediamessage").html(htmlconetnt.amediamessage(info));
+      self.editbuttonfun = "editmediamessage";
       return true;
     }
     if(data['eventtype'] == 'click'){
@@ -2431,6 +2575,75 @@ var groupnews = {
     att--;
     setTimeout(function(){groupnews.autotemppage(obj,att)}, '1000');
   },
+  groupnewscontent: function(data){//AAAAAAAAAAA
+    var a = "";
+    for(var x in data){
+      var la = data[x].length;
+      var updatetime = 0;
+      if(la>0)
+        updatetime = data[x]['0']["update_time"];
+      a += '<div style="float:left;padding:20px" newstime="'+updatetime+'" class="groupnews-card">';
+      a += '<div class="newscard">';
+      a += '<div>';
+      a += '<div>';
+      a += '<ul>';
+      if(la>0){
+        a += '<li style="background-repeat: no-repeat;background-size:cover;background-image:url('+"'/cimg.php?style=w_400&amp;image="+encodeURIComponent(data[x]['0']['thumb_url'])+"'"+')">';
+        a += '<p>'+data[x]['0']['title']+'</p>';
+        a += '<a href="'+data[x]['0']['url']+'" target="_blank">点击预览</a>';
+        a += '</li>';
+      }
+      for(var i=1; i<la; i++){
+        a += '<li>'
+        a += '<p>'+data[x][i]['title']+'</p>';
+        a += '<img src="/cimg.php?style=w_400&amp;image='+encodeURIComponent(data[x][i]['thumb_url'])+'">';
+        a += '<a href="'+data[x][i]['url']+'" target="_blank">点击预览</a>';
+        a += '</li>';
+      }
+      a += '</ul>';
+      a += '</div>';
+      a += '</div>';
+      a += '<div>';
+      a += '<button type="button" class="btn btn-primary groupnewssend" media-id="'+x+'">Group Send</button>';
+      a += '</div>';
+      a += '</div>';
+      a += '</div>';
+    }
+    return a;
+  },
+  ajaxloadnewslist: function(itime, order){
+    popup.openloading();
+    var pdata = {};
+    if(itime)
+      pdata = {
+        timestamp: itime,
+        order: order
+      };
+    $.ajax({
+      url:"/wechat/newsget",
+      type:"post",
+      dataType:'json',
+      data: pdata,
+      success:function(data){
+        popup.closeloading();
+        if(data.code == '10'){
+          if(this.hasOwnProperty('data') && this.data.hasOwnProperty('order')){
+            if(this.data.order == 'bottom')
+              $("#groupnewscontent").append(groupnews.groupnewscontent(data.list));
+            if(this.data.order == 'top')
+              $("#groupnewscontent").prepend(groupnews.groupnewscontent(data.list));
+          }else{
+            $("#groupnewscontent").append(groupnews.groupnewscontent(data.list));
+          }
+        }
+        popup.openwarning(data.msg);
+      },
+      error:function(){
+        popup.closeloading();
+        popup.openwarning('unknow errors');
+      }
+    });
+  },
   onload: function(){
     var self = this;
     $("#groupnewspanel").on("click", ".groupnewssend", function(){
@@ -2438,6 +2651,16 @@ var groupnews = {
     });
     $("#groupnewssubmit").click(function(){
       self.ajaxsendpre();
+    });
+    $(".groupnews-sync").on("click", "", function(){
+      var itime = $("#groupnewscontent").children('.groupnews-card').first().attr("newstime");
+      if(!itime)
+        itime = 1;
+      groupnews.ajaxloadnewslist(itime, 'top');
+    });
+    $(".groupnews-renew").on("click", "", function(){
+      var itime = $("#groupnewscontent").children('.groupnews-card').last().attr("newstime");
+      groupnews.ajaxloadnewslist(itime, 'bottom');
     });
   }
 }

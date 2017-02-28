@@ -11,22 +11,22 @@
 
 namespace Symfony\Component\Form\Tests\Extension\Core\Type;
 
-use Symfony\Component\Form\Extension\Core\View\ChoiceView;
 use Symfony\Component\Form\Test\TypeTestCase as TestCase;
+use Symfony\Component\Form\ChoiceList\View\ChoiceView;
 use Symfony\Component\Intl\Util\IntlTestHelper;
 
 class LocaleTypeTest extends TestCase
 {
     protected function setUp()
     {
-        IntlTestHelper::requireIntl($this);
+        IntlTestHelper::requireIntl($this, false);
 
         parent::setUp();
     }
 
     public function testLocalesAreSelectable()
     {
-        $form = $this->factory->create('locale');
+        $form = $this->factory->create('Symfony\Component\Form\Extension\Core\Type\LocaleType');
         $view = $form->createView();
         $choices = $view->vars['choices'];
 

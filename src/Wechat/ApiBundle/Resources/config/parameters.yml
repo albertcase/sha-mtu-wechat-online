@@ -18,6 +18,9 @@ parameters:
       - hideOptionMenu
       - showOptionMenu
       - closeWindow
+      - addCard
+      - chooseCard
+      - openCard
 
     wechat_api_permission:
       wechat_api_wechatmenu: change wechat menu

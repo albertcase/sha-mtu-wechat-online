@@ -114,7 +114,74 @@ class Wechat{
     $redis->setString('access_ticket', $ticketfile['ticket'], 5000);
   }
 
-  public function getAccessToken()
+  public function getCardSign($datain){
+    if(!is_array($datain) || !isset($datain['0']))
+      return array('code' => '9', 'msg' => 'input errors');
+    $ticket = $this->getCardTicket();
+    if($ticket && isset($ticket['code']) && $ticket['code'] == '10'){
+      $str = '1234567890abcdefghijklmnopqrstuvwxyz';
+      $noncestr = '';
+      for($i=0;$i<8;$i++){
+        $randval = mt_rand(0,35);
+        $noncestr .= $str[$randval];
+      }
+      $timestamp = time();
+      $list = array();
+      foreach($datain as $x){
+        if(isset($x['card_id']) && $x['card_id']){
+          $sortdata = array(
+            'api_ticket' => isset($ticket['ticket'])?$ticket['ticket']:'',
+            'timestamp' => "{$timestamp}",
+            'card_id' => $x['card_id'],
+            'code' => isset($x['code'])?$x['code']:'',
+            'openid' => isset($x['openid'])?$x['openid']:'',
+            'nonce_str' => $noncestr
+          );
+          asort($sortdata);
+          $signature = sha1(implode("", $sortdata));
+          $list[] = array(
+            'cardId' => $x['card_id'],
+            'cardExt' => array(
+              'code' => $sortdata['code'],
+              'openid' => $sortdata['openid'],
+              'timestamp' => $timestamp,
+              'balance' => '',
+              'signature' => $signature,
+              'nonce_str' => $noncestr,
+              'ticket' => $ticket['ticket']
+            )
+          );
+        }
+      }
+      return array(
+        'code' => '10',
+        'msg' => 'success',
+        'data' => array(
+          'cardList' => $list,
+        ),
+      );
+    }
+    return array('code' => '11', 'msg' => $ticket['msg']);
+  }
+
+  public function getCardTicket(){//ready
+    $redis = $this->_container->get('my.RedisLogic');
+    if($ticket = $redis->getString('access_wxcard_ticket'))
+      return array('code' => '10', 'msg' => 'ok', 'ticket' => $ticket);
+    if(!$access_token = $this->getAccessToken())
+      return array('code' => '9', 'msg' => 'token errors');
+    $url = $this->_urls['access_wxcard_ticket'];
+    $url = str_replace('ACCESS_TOKEN', $access_token ,$url);
+    $ticketfile = $this->get_data($url);
+    if(isset($ticketfile['ticket'])){
+      $redis->setString('access_wxcard_ticket', $ticketfile['ticket'], 5000);
+      return array('code' => '10', 'msg' => 'ok', 'ticket' => $ticketfile['ticket']);
+    }else{
+      return array('code' => '11', 'msg' => $ticketfile['errmsg']);
+    }
+  }
+
+  public function getAccessToken()//ready
   {
     $time = 0;
     $access_token = 0;
@@ -144,7 +211,7 @@ class Wechat{
 // token and Ticket start
 
 // creat_menu start
-  public function buildmenu(){
+  public function buildmenu(){//ready
     if(!$access_token = $this->getAccessToken())
       return false;
     $url = $this->_urls['create_menu'];
@@ -156,7 +223,7 @@ class Wechat{
     return $result['errmsg'];
   }
 
-  public function checkmenuarray(){
+  public function checkmenuarray(){//ready
     $menus = $this->create_menu_array();
     $menus = $menus['button'];
     foreach($menus as $x){
@@ -178,7 +245,7 @@ class Wechat{
     return true;
   }
 
-  public function create_menu_array(){
+  public function create_menu_array(){//ready
     $fun = $this->_container->get('my.functions');
     $data = array();
     $menus = $fun->getmenus();
@@ -186,7 +253,7 @@ class Wechat{
     return $this->filterbutton($data);
   }
 
-  public function buildsubmenu(&$data, $menus){
+  public function buildsubmenu(&$data, $menus){//ready
     foreach($menus as $x){
       if(isset($x['data'])){
         $tem = array(
@@ -214,7 +281,7 @@ class Wechat{
     }
   }
 
-  public function filterbutton($data){
+  public function filterbutton($data){//ready
     $out = array();
     $ox = 0;
     foreach($data as $x){
@@ -229,7 +296,7 @@ class Wechat{
     return array('button' => $out);
   }
 
-  public function rebuildArray($data){
+  public function rebuildArray($data){//ready
     $out = array();
     foreach($data as $x){
       $out[] = $x;
@@ -237,7 +304,7 @@ class Wechat{
     return $out;
   }
 
-  public function deletekeys($data){
+  public function deletekeys($data){//ready
     foreach($data as $x => $x_val){
       if($x != 'sub_button' && $x != 'name' ){
           unset($data[$x]);
@@ -336,7 +403,7 @@ class Wechat{
   }
 
   // @$data 'https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421140549&token=&lang=zh_CN'
-  public function sendTagMsg($data){//push message by tags
+  public function sendTagMsg($data){//push message by tags  //ready
     $access_token = $this->getAccessToken();
     $url = $this->_urls['tag_msg'];
     $url = str_replace('ACCESS_TOKEN', $access_token, $url);
@@ -376,7 +443,7 @@ class Wechat{
   }
 
 // oauth2
-  public function getoauth2url($goto, $snsapi = 'snsapi_userinfo', $state = ''){
+  public function getoauth2url($goto, $snsapi = 'snsapi_userinfo', $state = ''){//ready
     if(!in_array($snsapi, array('snsapi_userinfo', 'snsapi_base')))
       return false;
      $url = $this->_urls['oauth2_code'];
@@ -433,6 +500,7 @@ class Wechat{
     $this->_urls = array(
       'access_token' => 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=APPID&secret=APPSECRET',
       'access_api_ticket' => 'https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=ACCESS_TOKEN&type=jsapi',
+      'access_wxcard_ticket' => 'https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=ACCESS_TOKEN&type=wx_card',
       'create_menu' => 'https://api.weixin.qq.com/cgi-bin/menu/create?access_token=ACCESS_TOKEN',
       'custom_msend' => 'https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token=ACCESS_TOKEN',
       'oauth2_code' => 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=APPID&redirect_uri=REDIRECT_URI&response_type=code&scope=SCOPE&state=STATE#wechat_redirect',

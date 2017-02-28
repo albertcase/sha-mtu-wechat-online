@@ -9,9 +9,7 @@ use Symfony\Component\Filesystem\Filesystem;
 class oauthadd extends FormRequest{
   public function rule(){
     return array(
-       'redirect_url' => new Assert\Url(),
-       'callback_url' => new Assert\Url(),
-       'scope' => new Assert\Choice(array('snsapi_userinfo','snsapi_base')),
+       'redirect_url' => new Assert\NotBlank(),
        'name' => new Assert\NotBlank(),
     );
   }
@@ -31,24 +29,9 @@ class oauthadd extends FormRequest{
     $datain = array(
       'name' => $this->getdata['name'],
       'redirect_url' => $this->getdata['redirect_url'],
-      'callback_url' => $this->getdata['callback_url'],
-      'scope' => $this->getdata['scope'],
       'oauthfile' => uniqid(),
     );
     $this->container->get('my.dataSql')->addoauth($datain);
-    $filename = "upload/oauth/".$datain['oauthfile'].".php";
-    $fs = new Filesystem();
-    if(!$fs->exists(dirname($filename)))
-      $fs->mkdir(dirname($filename));
-    if($fs->exists($filename))
-      $fs->remove($filename);
-    ob_start();
-    print "<?php\n";
-    print "return ";
-    var_export($datain);
-    $string = ob_get_contents().";";
-    ob_end_clean();
-    $fs->dumpFile($filename, $string);
     return array('code' => '10' ,'msg' => 'build success');
   }
 }

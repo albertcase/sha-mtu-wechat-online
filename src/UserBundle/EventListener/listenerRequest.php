@@ -14,28 +14,31 @@ class listenerRequest{
     private $router;
     private $userinfo;
 
-    public function __construct(Request $request ,$container){
-	      $this->request = $request;
+    public function __construct($request ,$container){
+	      $this->request = $request->getCurrentRequest();
         $this->container = $container;
     }
 
     public function onKernelRequest(GetResponseEvent $event){
     	$this->router = $event->getRequest()->get('_route');
-      $this->userinfo = $this->getUserinfo();
-      if(!in_array("user_usercontrol", $this->userinfo['permission'])){
+      // $this->userinfo = $this->getUserinfo();
+      // if(!in_array("user_usercontrol", $this->userinfo['permission'])){
         $this->judgeApiPrtmission($event);
         $this->judgePagePrtmission($event);
-      }
-      $this->container->get("twig")->addGlobal("userinfo", $this->userinfo);
+      // }
+      // $this->container->get("twig")->addGlobal("userinfo", $this->userinfo);
     }
 
     private function judgeApiPrtmission(&$event){
       if(preg_match("/.+_papi_.+/" ,trim($this->router))){
-        $pers = $this->getApiPermission();
-        if(array_key_exists($this->router, $pers)){
-          if(!in_array($pers[$this->router]['permission'], $this->userinfo['permission'])){
-            $_controller = $this->container->get('router')->getRouteCollection()->get($pers[$this->router]['goto'])->getDefaults();
-            $event->getRequest()->attributes->set("_controller", $_controller['_controller']);
+        $this->userinfo = $this->getUserinfo();
+        if(!in_array("user_usercontrol", $this->userinfo['permission'])){
+          $pers = $this->getApiPermission();
+          if(array_key_exists($this->router, $pers)){
+            if(!in_array($pers[$this->router]['permission'], $this->userinfo['permission'])){
+              $_controller = $this->container->get('router')->getRouteCollection()->get($pers[$this->router]['goto'])->getDefaults();
+              $event->getRequest()->attributes->set("_controller", $_controller['_controller']);
+            }
           }
         }
       }
@@ -43,17 +46,21 @@ class listenerRequest{
 
     private function judgePagePrtmission(&$event){
       if(preg_match("/.+_page_.+/" ,trim($this->router))){
-        $pers = $this->getPagePermission();
-        if(array_key_exists($this->router, $pers)){
-          if($this->userinfo['uid'] == 0){
-            $_controller = $this->container->get('router')->getRouteCollection()->get($pers[$this->router]['login'])->getDefaults();
-            return $event->getRequest()->attributes->set("_controller", $_controller['_controller']);
-          }
-          if(!in_array($pers[$this->router]['permission'], $this->userinfo['permission'])){
-            $_controller = $this->container->get('router')->getRouteCollection()->get($pers[$this->router]['goto'])->getDefaults();
-            $event->getRequest()->attributes->set("_controller", $_controller['_controller']);
+        $this->userinfo = $this->getUserinfo();
+        if(!in_array("user_usercontrol", $this->userinfo['permission'])){
+          $pers = $this->getPagePermission();
+          if(array_key_exists($this->router, $pers)){
+            if($this->userinfo['uid'] == 0){
+              $_controller = $this->container->get('router')->getRouteCollection()->get($pers[$this->router]['login'])->getDefaults();
+              return $event->getRequest()->attributes->set("_controller", $_controller['_controller']);
+            }
+            if(!in_array($pers[$this->router]['permission'], $this->userinfo['permission'])){
+              $_controller = $this->container->get('router')->getRouteCollection()->get($pers[$this->router]['goto'])->getDefaults();
+              $event->getRequest()->attributes->set("_controller", $_controller['_controller']);
+            }
           }
         }
+        $this->container->get("twig")->addGlobal("userinfo", $this->userinfo);
       }
     }
 

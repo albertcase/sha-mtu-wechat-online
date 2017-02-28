@@ -49,9 +49,6 @@ class MarkdownDescriptor extends Descriptor
      */
     protected function describeRoute(Route $route, array $options = array())
     {
-        $requirements = $route->getRequirements();
-        unset($requirements['_scheme'], $requirements['_method']);
-
         $output = '- Path: '.$route->getPath()
             ."\n".'- Path Regex: '.$route->compile()->getRegex()
             ."\n".'- Host: '.('' !== $route->getHost() ? $route->getHost() : 'ANY')
@@ -60,7 +57,7 @@ class MarkdownDescriptor extends Descriptor
             ."\n".'- Method: '.($route->getMethods() ? implode('|', $route->getMethods()) : 'ANY')
             ."\n".'- Class: '.get_class($route)
             ."\n".'- Defaults: '.$this->formatRouterConfig($route->getDefaults())
-            ."\n".'- Requirements: '.($requirements ? $this->formatRouterConfig($requirements) : 'NO CUSTOM')
+            ."\n".'- Requirements: '.($route->getRequirements() ? $this->formatRouterConfig($route->getRequirements()) : 'NO CUSTOM')
             ."\n".'- Options: '.$this->formatRouterConfig($route->getOptions());
 
         $this->write(isset($options['name'])
@@ -113,7 +110,7 @@ class MarkdownDescriptor extends Descriptor
         } elseif ($service instanceof Definition) {
             $this->describeContainerDefinition($service, $childOptions);
         } else {
-            $this->write(sprintf("**`%s`:** `%s`", $options['id'], get_class($service)));
+            $this->write(sprintf('**`%s`:** `%s`', $options['id'], get_class($service)));
         }
     }
 
@@ -179,27 +176,27 @@ class MarkdownDescriptor extends Descriptor
     protected function describeContainerDefinition(Definition $definition, array $options = array())
     {
         $output = '- Class: `'.$definition->getClass().'`'
-            ."\n".'- Scope: `'.$definition->getScope().'`'
             ."\n".'- Public: '.($definition->isPublic() ? 'yes' : 'no')
             ."\n".'- Synthetic: '.($definition->isSynthetic() ? 'yes' : 'no')
             ."\n".'- Lazy: '.($definition->isLazy() ? 'yes' : 'no')
-            ."\n".'- Synchronized: '.($definition->isSynchronized() ? 'yes' : 'no')
-            ."\n".'- Abstract: '.($definition->isAbstract() ? 'yes' : 'no');
+        ;
+
+        if (method_exists($definition, 'isShared')) {
+            $output .= "\n".'- Shared: '.($definition->isShared() ? 'yes' : 'no');
+        }
+
+        $output .= "\n".'- Abstract: '.($definition->isAbstract() ? 'yes' : 'no');
+
+        if (method_exists($definition, 'isAutowired')) {
+            $output .= "\n".'- Autowired: '.($definition->isAutowired() ? 'yes' : 'no');
+
+            foreach ($definition->getAutowiringTypes() as $autowiringType) {
+                $output .= "\n".'- Autowiring Type: `'.$autowiringType.'`';
+            }
+        }
 
         if ($definition->getFile()) {
             $output .= "\n".'- File: `'.$definition->getFile().'`';
-        }
-
-        if ($definition->getFactoryClass()) {
-            $output .= "\n".'- Factory Class: `'.$definition->getFactoryClass().'`';
-        }
-
-        if ($definition->getFactoryService()) {
-            $output .= "\n".'- Factory Service: `'.$definition->getFactoryService().'`';
-        }
-
-        if ($definition->getFactoryMethod()) {
-            $output .= "\n".'- Factory Method: `'.$definition->getFactoryMethod().'`';
         }
 
         if ($factory = $definition->getFactory()) {
@@ -215,6 +212,11 @@ class MarkdownDescriptor extends Descriptor
             } else {
                 $output .= "\n".'- Factory Function: `'.$factory.'`';
             }
+        }
+
+        $calls = $definition->getMethodCalls();
+        foreach ($calls as $callData) {
+            $output .= "\n".'- Call: `'.$callData[0].'`';
         }
 
         if (!(isset($options['omit_tags']) && $options['omit_tags'])) {
@@ -269,6 +271,7 @@ class MarkdownDescriptor extends Descriptor
             foreach ($registeredListeners as $order => $listener) {
                 $this->write("\n".sprintf('## Listener %d', $order + 1)."\n");
                 $this->describeCallable($listener);
+                $this->write(sprintf('- Priority: `%d`', $eventDispatcher->getListenerPriority($event, $listener))."\n");
             }
         } else {
             ksort($registeredListeners);
@@ -279,6 +282,7 @@ class MarkdownDescriptor extends Descriptor
                 foreach ($eventListeners as $order => $eventListener) {
                     $this->write("\n".sprintf('### Listener %d', $order + 1)."\n");
                     $this->describeCallable($eventListener);
+                    $this->write(sprintf('- Priority: `%d`', $eventDispatcher->getListenerPriority($eventListened, $eventListener))."\n");
                 }
             }
         }

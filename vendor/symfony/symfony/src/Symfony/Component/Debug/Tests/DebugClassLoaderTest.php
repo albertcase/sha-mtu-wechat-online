@@ -13,12 +13,11 @@ namespace Symfony\Component\Debug\Tests;
 
 use Symfony\Component\Debug\DebugClassLoader;
 use Symfony\Component\Debug\ErrorHandler;
-use Symfony\Component\Debug\Exception\ContextErrorException;
 
 class DebugClassLoaderTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var int Error reporting level before running tests.
+     * @var int Error reporting level before running tests
      */
     private $errorReporting;
 
@@ -26,7 +25,7 @@ class DebugClassLoaderTest extends \PHPUnit_Framework_TestCase
 
     protected function setUp()
     {
-        $this->errorReporting = error_reporting(E_ALL | E_STRICT);
+        $this->errorReporting = error_reporting(E_ALL);
         $this->loader = new ClassLoader();
         spl_autoload_register(array($this->loader, 'loadClass'), true, true);
         DebugClassLoader::enable();
@@ -108,8 +107,6 @@ class DebugClassLoaderTest extends \PHPUnit_Framework_TestCase
             $this->fail('ContextErrorException expected');
         } catch (\ErrorException $exception) {
             // if an exception is thrown, the test passed
-            restore_error_handler();
-            restore_exception_handler();
             $this->assertStringStartsWith(__FILE__, $exception->getFile());
             if (PHP_VERSION_ID < 70000) {
                 $this->assertRegExp('/^Runtime Notice: Declaration/', $exception->getMessage());
@@ -118,11 +115,9 @@ class DebugClassLoaderTest extends \PHPUnit_Framework_TestCase
                 $this->assertRegExp('/^Warning: Declaration/', $exception->getMessage());
                 $this->assertEquals(E_WARNING, $exception->getSeverity());
             }
-        } catch (\Exception $exception) {
+        } finally {
             restore_error_handler();
             restore_exception_handler();
-
-            throw $exception;
         }
     }
 
@@ -136,7 +131,7 @@ class DebugClassLoaderTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \RuntimeException
-     * @expectedExceptionMessage Case mismatch between class and source file names
+     * @expectedExceptionMessage Case mismatch between class and real file names
      */
     public function testFileCaseMismatch()
     {
@@ -169,6 +164,109 @@ class DebugClassLoaderTest extends \PHPUnit_Framework_TestCase
     {
         $this->assertTrue(class_exists(__NAMESPACE__.'\Fixtures\ClassAlias', true));
     }
+
+    /**
+     * @dataProvider provideDeprecatedSuper
+     */
+    public function testDeprecatedSuper($class, $super, $type)
+    {
+        set_error_handler(function () { return false; });
+        $e = error_reporting(0);
+        trigger_error('', E_USER_DEPRECATED);
+
+        class_exists('Test\\'.__NAMESPACE__.'\\'.$class, true);
+
+        error_reporting($e);
+        restore_error_handler();
+
+        $lastError = error_get_last();
+        unset($lastError['file'], $lastError['line']);
+
+        $xError = array(
+            'type' => E_USER_DEPRECATED,
+            'message' => 'The Test\Symfony\Component\Debug\Tests\\'.$class.' class '.$type.' Symfony\Component\Debug\Tests\Fixtures\\'.$super.' that is deprecated but this is a test deprecation notice.',
+        );
+
+        $this->assertSame($xError, $lastError);
+    }
+
+    public function provideDeprecatedSuper()
+    {
+        return array(
+            array('DeprecatedInterfaceClass', 'DeprecatedInterface', 'implements'),
+            array('DeprecatedParentClass', 'DeprecatedClass', 'extends'),
+        );
+    }
+
+    public function testInterfaceExtendsDeprecatedInterface()
+    {
+        set_error_handler(function () { return false; });
+        $e = error_reporting(0);
+        trigger_error('', E_USER_NOTICE);
+
+        class_exists('Test\\'.__NAMESPACE__.'\\NonDeprecatedInterfaceClass', true);
+
+        error_reporting($e);
+        restore_error_handler();
+
+        $lastError = error_get_last();
+        unset($lastError['file'], $lastError['line']);
+
+        $xError = array(
+            'type' => E_USER_NOTICE,
+            'message' => '',
+        );
+
+        $this->assertSame($xError, $lastError);
+    }
+
+    public function testDeprecatedSuperInSameNamespace()
+    {
+        set_error_handler(function () { return false; });
+        $e = error_reporting(0);
+        trigger_error('', E_USER_NOTICE);
+
+        class_exists('Symfony\Bridge\Debug\Tests\Fixtures\ExtendsDeprecatedParent', true);
+
+        error_reporting($e);
+        restore_error_handler();
+
+        $lastError = error_get_last();
+        unset($lastError['file'], $lastError['line']);
+
+        $xError = array(
+            'type' => E_USER_NOTICE,
+            'message' => '',
+        );
+
+        $this->assertSame($xError, $lastError);
+    }
+
+    public function testReservedForPhp7()
+    {
+        if (PHP_VERSION_ID >= 70000) {
+            $this->markTestSkipped('PHP7 already prevents using reserved names.');
+        }
+
+        set_error_handler(function () { return false; });
+        $e = error_reporting(0);
+        trigger_error('', E_USER_NOTICE);
+
+        class_exists('Test\\'.__NAMESPACE__.'\\Float', true);
+
+        error_reporting($e);
+        restore_error_handler();
+
+        $lastError = error_get_last();
+        unset($lastError['file'], $lastError['line']);
+
+        $xError = array(
+            'type' => E_USER_DEPRECATED,
+            'message' => 'Test\Symfony\Component\Debug\Tests\Float uses a reserved class name (Float) that will break on PHP 7 and higher',
+        );
+
+        $this->assertSame($xError, $lastError);
+    }
 }
 
 class ClassLoader
@@ -200,6 +298,18 @@ class ClassLoader
             return $fixtureDir.'reallyNotPsr0.php';
         } elseif (__NAMESPACE__.'\Fixtures\NotPSR0bis' === $class) {
             return $fixtureDir.'notPsr0Bis.php';
+        } elseif (__NAMESPACE__.'\Fixtures\DeprecatedInterface' === $class) {
+            return $fixtureDir.'DeprecatedInterface.php';
+        } elseif ('Symfony\Bridge\Debug\Tests\Fixtures\ExtendsDeprecatedParent' === $class) {
+            eval('namespace Symfony\Bridge\Debug\Tests\Fixtures; class ExtendsDeprecatedParent extends \\'.__NAMESPACE__.'\Fixtures\DeprecatedClass {}');
+        } elseif ('Test\\'.__NAMESPACE__.'\DeprecatedParentClass' === $class) {
+            eval('namespace Test\\'.__NAMESPACE__.'; class DeprecatedParentClass extends \\'.__NAMESPACE__.'\Fixtures\DeprecatedClass {}');
+        } elseif ('Test\\'.__NAMESPACE__.'\DeprecatedInterfaceClass' === $class) {
+            eval('namespace Test\\'.__NAMESPACE__.'; class DeprecatedInterfaceClass implements \\'.__NAMESPACE__.'\Fixtures\DeprecatedInterface {}');
+        } elseif ('Test\\'.__NAMESPACE__.'\NonDeprecatedInterfaceClass' === $class) {
+            eval('namespace Test\\'.__NAMESPACE__.'; class NonDeprecatedInterfaceClass implements \\'.__NAMESPACE__.'\Fixtures\NonDeprecatedInterface {}');
+        } elseif ('Test\\'.__NAMESPACE__.'\Float' === $class) {
+            eval('namespace Test\\'.__NAMESPACE__.'; class Float {}');
         }
     }
 }

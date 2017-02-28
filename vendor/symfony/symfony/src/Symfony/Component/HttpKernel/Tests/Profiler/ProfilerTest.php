@@ -12,10 +12,11 @@
 namespace Symfony\Component\HttpKernel\Tests\Profiler;
 
 use Symfony\Component\HttpKernel\DataCollector\RequestDataCollector;
-use Symfony\Component\HttpKernel\Profiler\SqliteProfilerStorage;
+use Symfony\Component\HttpKernel\Profiler\FileProfilerStorage;
 use Symfony\Component\HttpKernel\Profiler\Profiler;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\VarDumper\Cloner\Data;
 
 class ProfilerTest extends \PHPUnit_Framework_TestCase
 {
@@ -26,15 +27,16 @@ class ProfilerTest extends \PHPUnit_Framework_TestCase
     {
         $request = new Request();
         $request->query->set('foo', 'bar');
-        $response = new Response();
+        $response = new Response('', 204);
         $collector = new RequestDataCollector();
 
         $profiler = new Profiler($this->storage);
         $profiler->add($collector);
         $profile = $profiler->collect($request, $response);
 
-        $profile = $profiler->loadProfile($profile->getToken());
-        $this->assertEquals(array('foo' => 'bar'), $profiler->get('request')->getRequestQuery()->all());
+        $this->assertSame(204, $profile->getStatusCode());
+        $this->assertSame('GET', $profile->getMethod());
+        $this->assertInstanceOf(Data::class, $profiler->get('request')->getRequestQuery()->all()['foo']);
     }
 
     public function testFindWorksWithDates()
@@ -58,18 +60,21 @@ class ProfilerTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(0, $profiler->find(null, null, null, null, 'some string', ''));
     }
 
+    public function testFindWorksWithStatusCode()
+    {
+        $profiler = new Profiler($this->storage);
+
+        $this->assertCount(0, $profiler->find(null, null, null, null, null, null, '204'));
+    }
+
     protected function setUp()
     {
-        if (!class_exists('SQLite3') && (!class_exists('PDO') || !in_array('sqlite', \PDO::getAvailableDrivers()))) {
-            $this->markTestSkipped('This test requires SQLite support in your environment');
-        }
-
         $this->tmp = tempnam(sys_get_temp_dir(), 'sf2_profiler');
         if (file_exists($this->tmp)) {
             @unlink($this->tmp);
         }
 
-        $this->storage = new SqliteProfilerStorage('sqlite:'.$this->tmp);
+        $this->storage = new FileProfilerStorage('file:'.$this->tmp);
         $this->storage->purge();
     }
 

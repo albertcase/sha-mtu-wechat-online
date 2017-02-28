@@ -17,8 +17,6 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
 /**
  * @author Bernhard Schussek <bschussek@gmail.com>
- *
- * @api
  */
 class IsFalseValidator extends ConstraintValidator
 {
@@ -35,8 +33,9 @@ class IsFalseValidator extends ConstraintValidator
             return;
         }
 
-        $this->buildViolation($constraint->message)
+        $this->context->buildViolation($constraint->message)
             ->setParameter('{{ value }}', $this->formatValue($value))
+            ->setCode(IsFalse::NOT_FALSE_ERROR)
             ->addViolation();
     }
 }

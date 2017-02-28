@@ -10,9 +10,7 @@ class oauthupdate extends FormRequest{
   public function rule(){
     return array(
       'id' => new Assert\NotBlank(),
-      'redirect_url' => new Assert\Url(),
-      'callback_url' => new Assert\Url(),
-      'scope' => new Assert\Choice(array('snsapi_userinfo','snsapi_base')),
+      'redirect_url' => new Assert\NotBlank(),
       'name' => new Assert\NotBlank(),
     );
   }
@@ -29,35 +27,17 @@ class oauthupdate extends FormRequest{
   }
 
   public function dealData(){
-    $oauthfile = $this->container->get('my.dataSql')->checkoauth(array('id' => intval($this->getdata['id'])));
-    if(!$oauthfile)
+    $oauthfile = $this->container->get('my.dataSql')->oauthinfo($this->getdata['id']);
+    if(!$oauthfile || !isset($oauthfile['0']))
       return array('code' => '9' ,'msg' => 'this oauth not exists');
-    $filename = "upload/oauth/".$oauthfile.".php";
-    $fs = new Filesystem();
     $datain = array(
       'name' => $this->getdata['name'],
       'redirect_url' => $this->getdata['redirect_url'],
-      'callback_url' => $this->getdata['callback_url'],
-      'scope' => $this->getdata['scope'],
-      'oauthfile' => $oauthfile,
+      'oauthfile' => $oauthfile['0']['oauthfile'],
     );
-    if(!$fs->exists(dirname($filename)))
-      $fs->mkdir(dirname($filename));
-    if($fs->exists($filename))
-      $fs->remove($filename);
-    ob_start();
-    print "<?php\n";
-    print "return ";
-    var_export($datain);
-    $string = ob_get_contents().";";
-    ob_end_clean();
-    $fs->dumpFile($filename, $string);
-    $this->container->get('my.dataSql')->oauthupdate(intval($this->getdata['id']), array(
-      'name' => $this->getdata['name'],
-      'redirect_url' => $this->getdata['redirect_url'],
-      'callback_url' => $this->getdata['callback_url'],
-      'scope' => $this->getdata['scope'],
-    ));
+    $redis = $this->container->get('my.RedisLogic');
+    $redis->delSet('wechatoauthorize', $oauthfile['0']['redirect_url']);
+    $this->container->get('my.dataSql')->oauthupdate(intval($this->getdata['id']), $datain);
     return array('code' => '10' ,'msg' => 'update success');
   }
 }

@@ -32,7 +32,7 @@ class EntityTypePerformanceTest extends FormPerformanceTestCase
 
     protected function getExtensions()
     {
-        $manager = $this->getMock('Doctrine\Common\Persistence\ManagerRegistry');
+        $manager = $this->getMockBuilder('Doctrine\Common\Persistence\ManagerRegistry')->getMock();
 
         $manager->expects($this->any())
             ->method('getManager')
@@ -90,7 +90,7 @@ class EntityTypePerformanceTest extends FormPerformanceTestCase
         $this->setMaxRunningTime(1);
 
         for ($i = 0; $i < 40; ++$i) {
-            $form = $this->factory->create('entity', null, array(
+            $form = $this->factory->create('Symfony\Bridge\Doctrine\Form\Type\EntityType', null, array(
                 'class' => self::ENTITY_CLASS,
             ));
 
@@ -108,7 +108,7 @@ class EntityTypePerformanceTest extends FormPerformanceTestCase
         $this->setMaxRunningTime(1);
 
         for ($i = 0; $i < 40; ++$i) {
-            $form = $this->factory->create('entity', null, array(
+            $form = $this->factory->create('Symfony\Bridge\Doctrine\Form\Type\EntityType', null, array(
                 'class' => self::ENTITY_CLASS,
                 'choices' => $choices,
             ));
@@ -127,7 +127,7 @@ class EntityTypePerformanceTest extends FormPerformanceTestCase
         $this->setMaxRunningTime(1);
 
         for ($i = 0; $i < 40; ++$i) {
-            $form = $this->factory->create('entity', null, array(
+            $form = $this->factory->create('Symfony\Bridge\Doctrine\Form\Type\EntityType', null, array(
                     'class' => self::ENTITY_CLASS,
                     'preferred_choices' => $choices,
                 ));

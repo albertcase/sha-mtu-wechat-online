@@ -12,7 +12,7 @@ use Symfony\Component\Config\FileLocator;
 class UpdateOpenidInfoCommand extends Command{
 
   protected function configure(){
-    $this->setName('wechat:update.openidinfo')
+    $this->setName('wechat:retrieve.userinfo')
         ->setDescription('Update Openid Infomation')
         ->addArgument('start_id',
           InputArgument::OPTIONAL,
@@ -31,7 +31,7 @@ class UpdateOpenidInfoCommand extends Command{
 
   protected function GetNextRow($start_id){
     $start_id = intval($start_id);
-    $db = $this->getApplication()->getKernel()->getContainer()->get('my.dataSql');
+    $db = $this->getApplication()->getKernel()->getContainer()->get('my.LdataSql');
     $sql = "SELECT `id`,`openid` FROM `wechat_users` WHERE id>{$start_id} and headimgurl='' LIMIT 1";
     return $db->querysql($sql);
   }
@@ -63,7 +63,7 @@ class UpdateOpenidInfoCommand extends Command{
       'province' => isset($change['province'])?$change['province']:'',
       'city' => isset($change['city'])?$change['city']:''
     );
-    $db = $this->getApplication()->getKernel()->getContainer()->get('my.dataSql');
+    $db = $this->getApplication()->getKernel()->getContainer()->get('my.LdataSql');
     $db->updateData(array('openid' => $openid), $data, 'wechat_users');
   }
 

@@ -75,7 +75,7 @@ class StopwatchEvent
     /**
      * Starts a new event period.
      *
-     * @return StopwatchEvent The event
+     * @return $this
      */
     public function start()
     {
@@ -87,9 +87,7 @@ class StopwatchEvent
     /**
      * Stops the last started event period.
      *
-     * @throws \LogicException When start wasn't called before stopping
-     *
-     * @return StopwatchEvent The event
+     * @return $this
      *
      * @throws \LogicException When stop() is called without a matching call to start()
      */
@@ -117,7 +115,7 @@ class StopwatchEvent
     /**
      * Stops the current period and then starts a new one.
      *
-     * @return StopwatchEvent The event
+     * @return $this
      */
     public function lap()
     {
@@ -177,7 +175,7 @@ class StopwatchEvent
         $stopped = count($periods);
         $left = count($this->started) - $stopped;
 
-        for ($i = 0; $i < $left; $i++) {
+        for ($i = 0; $i < $left; ++$i) {
             $index = $stopped + $i;
             $periods[] = new StopwatchPeriod($this->started[$index], $this->getNow());
         }
@@ -233,5 +231,13 @@ class StopwatchEvent
         }
 
         return round($time, 1);
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return sprintf('%s: %.2F MiB - %d ms', $this->getCategory(), $this->getMemory() / 1024 / 1024, $this->getDuration());
     }
 }

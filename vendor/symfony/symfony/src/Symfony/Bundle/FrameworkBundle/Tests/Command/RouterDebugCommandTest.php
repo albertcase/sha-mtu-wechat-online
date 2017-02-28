@@ -25,7 +25,7 @@ class RouterDebugCommandTest extends \PHPUnit_Framework_TestCase
         $ret = $tester->execute(array('name' => null), array('decorated' => false));
 
         $this->assertEquals(0, $ret, 'Returns 0 in case of success');
-        $this->assertContains('[router] Current routes', $tester->getDisplay());
+        $this->assertContains('Name   Method   Scheme   Host   Path', $tester->getDisplay());
     }
 
     public function testDebugSingleRoute()
@@ -34,7 +34,7 @@ class RouterDebugCommandTest extends \PHPUnit_Framework_TestCase
         $ret = $tester->execute(array('name' => 'foo'), array('decorated' => false));
 
         $this->assertEquals(0, $ret, 'Returns 0 in case of success');
-        $this->assertContains('[router] Route "foo"', $tester->getDisplay());
+        $this->assertContains('Route Name   | foo', $tester->getDisplay());
     }
 
     /**
@@ -63,7 +63,7 @@ class RouterDebugCommandTest extends \PHPUnit_Framework_TestCase
     {
         $routeCollection = new RouteCollection();
         $routeCollection->add('foo', new Route('foo'));
-        $router = $this->getMock('Symfony\Component\Routing\RouterInterface');
+        $router = $this->getMockBuilder('Symfony\Component\Routing\RouterInterface')->getMock();
         $router
             ->expects($this->any())
             ->method('getRouteCollection')
@@ -74,7 +74,7 @@ class RouterDebugCommandTest extends \PHPUnit_Framework_TestCase
              ->disableOriginalConstructor()
              ->getMock();
 
-        $container = $this->getMock('Symfony\Component\DependencyInjection\ContainerInterface');
+        $container = $this->getMockBuilder('Symfony\Component\DependencyInjection\ContainerInterface')->getMock();
         $container
             ->expects($this->once())
             ->method('has')

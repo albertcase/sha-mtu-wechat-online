@@ -19,6 +19,7 @@ use Symfony\Component\Serializer\Exception\UnexpectedValueException;
  * @author Jordi Boggiano <j.boggiano@seld.be>
  * @author John Wards <jwards@whiteoctober.co.uk>
  * @author Fabian Vogler <fabian@equivalence.ch>
+ * @author Kévin Dunglas <dunglas@gmail.com>
  */
 class XmlEncoder extends SerializerAwareEncoder implements EncoderInterface, DecoderInterface, NormalizationAwareInterface
 {
@@ -29,15 +30,18 @@ class XmlEncoder extends SerializerAwareEncoder implements EncoderInterface, Dec
     private $format;
     private $context;
     private $rootNodeName = 'response';
+    private $loadOptions;
 
     /**
      * Construct new XmlEncoder and allow to change the root node element name.
      *
-     * @param string $rootNodeName
+     * @param string   $rootNodeName
+     * @param int|null $loadOptions  A bit field of LIBXML_* constants
      */
-    public function __construct($rootNodeName = 'response')
+    public function __construct($rootNodeName = 'response', $loadOptions = null)
     {
         $this->rootNodeName = $rootNodeName;
+        $this->loadOptions = null !== $loadOptions ? $loadOptions : LIBXML_NONET | LIBXML_NOBLANKS;
     }
 
     /**
@@ -80,7 +84,7 @@ class XmlEncoder extends SerializerAwareEncoder implements EncoderInterface, Dec
         libxml_clear_errors();
 
         $dom = new \DOMDocument();
-        $dom->loadXML($data, LIBXML_NONET | LIBXML_NOBLANKS);
+        $dom->loadXML($data, $this->loadOptions);
 
         libxml_use_internal_errors($internalErrors);
         libxml_disable_entity_loader($disableEntities);
@@ -365,7 +369,7 @@ class XmlEncoder extends SerializerAwareEncoder implements EncoderInterface, Dec
     {
         $append = true;
 
-        if (is_array($data) || $data instanceof \Traversable) {
+        if (is_array($data) || ($data instanceof \Traversable && !$this->serializer->supportsNormalization($data, $this->format))) {
             foreach ($data as $key => $data) {
                 //Ah this is the magic @ attribute types.
                 if (0 === strpos($key, '@') && is_scalar($data) && $this->isElementNameValid($attributeName = substr($key, 1))) {
@@ -460,6 +464,8 @@ class XmlEncoder extends SerializerAwareEncoder implements EncoderInterface, Dec
      * @param mixed    $val
      *
      * @return bool
+     *
+     * @throws UnexpectedValueException
      */
     private function selectNodeType(\DOMNode $node, $val)
     {
@@ -505,7 +511,7 @@ class XmlEncoder extends SerializerAwareEncoder implements EncoderInterface, Dec
     /**
      * Create a DOM document, taking serializer options into account.
      *
-     * @param array $context options that the encoder has access to.
+     * @param array $context options that the encoder has access to
      *
      * @return \DOMDocument
      */
@@ -515,6 +521,8 @@ class XmlEncoder extends SerializerAwareEncoder implements EncoderInterface, Dec
 
         // Set an attribute on the DOM document specifying, as part of the XML declaration,
         $xmlOptions = array(
+            // nicely formats output with indentation and extra space
+            'xml_format_output' => 'formatOutput',
             // the version number of the document
             'xml_version' => 'xmlVersion',
             // the encoding of the document

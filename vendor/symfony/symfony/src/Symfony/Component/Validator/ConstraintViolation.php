@@ -105,7 +105,7 @@ class ConstraintViolation implements ConstraintViolationInterface
     /**
      * Converts the violation into a string for debugging purposes.
      *
-     * @return string The violation as string.
+     * @return string The violation as string
      */
     public function __toString()
     {
@@ -142,14 +142,6 @@ class ConstraintViolation implements ConstraintViolationInterface
     /**
      * {@inheritdoc}
      */
-    public function getMessageParameters()
-    {
-        return $this->parameters;
-    }
-
-    /**
-     * Alias of {@link getMessageParameters()}.
-     */
     public function getParameters()
     {
         return $this->parameters;
@@ -157,14 +149,6 @@ class ConstraintViolation implements ConstraintViolationInterface
 
     /**
      * {@inheritdoc}
-     */
-    public function getMessagePluralization()
-    {
-        return $this->plural;
-    }
-
-    /**
-     * Alias of {@link getMessagePluralization()}.
      */
     public function getPlural()
     {

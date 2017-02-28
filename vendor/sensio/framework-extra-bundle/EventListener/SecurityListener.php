@@ -56,8 +56,12 @@ class SecurityListener implements EventSubscriberInterface
             throw new \LogicException('To use the @Security tag, you need to install the Symfony Security bundle.');
         }
 
+        if (null === $this->tokenStorage->getToken()) {
+            throw new \LogicException('To use the @Security tag, your controller needs to be behind a firewall.');
+        }
+
         if (null === $this->language) {
-            throw new \LogicException('To use the @Security tag, you need to use the Security component 2.4 or newer and to install the ExpressionLanguage component.');
+            throw new \LogicException('To use the @Security tag, you need to use the Security component 2.4 or newer and install the ExpressionLanguage component.');
         }
 
         if (!$this->language->evaluate($configuration->getExpression(), $this->getVariables($request))) {

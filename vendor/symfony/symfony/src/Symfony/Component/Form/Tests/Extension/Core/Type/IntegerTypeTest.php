@@ -18,14 +18,14 @@ class IntegerTypeTest extends TestCase
 {
     protected function setUp()
     {
-        IntlTestHelper::requireIntl($this);
+        IntlTestHelper::requireIntl($this, false);
 
         parent::setUp();
     }
 
     public function testSubmitCastsToInteger()
     {
-        $form = $this->factory->create('integer');
+        $form = $this->factory->create('Symfony\Component\Form\Extension\Core\Type\IntegerType');
 
         $form->submit('1.678');
 

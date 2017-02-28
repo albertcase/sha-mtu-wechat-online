@@ -18,7 +18,7 @@ class PhpFileLoaderTest extends \PHPUnit_Framework_TestCase
 {
     public function testSupports()
     {
-        $loader = new PhpFileLoader($this->getMock('Symfony\Component\Config\FileLocator'));
+        $loader = new PhpFileLoader($this->getMockBuilder('Symfony\Component\Config\FileLocator')->getMock());
 
         $this->assertTrue($loader->supports('foo.php'), '->supports() returns true if the resource is loadable');
         $this->assertFalse($loader->supports('foo.foo'), '->supports() returns true if the resource is loadable');
@@ -33,7 +33,7 @@ class PhpFileLoaderTest extends \PHPUnit_Framework_TestCase
         $routeCollection = $loader->load('validpattern.php');
         $routes = $routeCollection->all();
 
-        $this->assertCount(2, $routes, 'Two routes are loaded');
+        $this->assertCount(1, $routes, 'One route is loaded');
         $this->assertContainsOnly('Symfony\Component\Routing\Route', $routes);
 
         foreach ($routes as $route) {
@@ -52,7 +52,7 @@ class PhpFileLoaderTest extends \PHPUnit_Framework_TestCase
         $routeCollection = $loader->load('validresource.php');
         $routes = $routeCollection->all();
 
-        $this->assertCount(2, $routes, 'Two routes are loaded');
+        $this->assertCount(1, $routes, 'One route is loaded');
         $this->assertContainsOnly('Symfony\Component\Routing\Route', $routes);
 
         foreach ($routes as $route) {

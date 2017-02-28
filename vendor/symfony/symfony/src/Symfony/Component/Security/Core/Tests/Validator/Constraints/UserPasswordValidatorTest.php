@@ -11,9 +11,9 @@
 
 namespace Symfony\Component\Security\Core\Tests\Validator\Constraints;
 
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Encoder\EncoderFactoryInterface;
 use Symfony\Component\Security\Core\Encoder\PasswordEncoderInterface;
-use Symfony\Component\Security\Core\SecurityContextInterface;
 use Symfony\Component\Security\Core\Validator\Constraints\UserPassword;
 use Symfony\Component\Security\Core\Validator\Constraints\UserPasswordValidator;
 use Symfony\Component\Validator\Tests\Constraints\AbstractConstraintValidatorTest;
@@ -28,9 +28,9 @@ abstract class UserPasswordValidatorTest extends AbstractConstraintValidatorTest
     const SALT = '^S4lt$';
 
     /**
-     * @var SecurityContextInterface
+     * @var TokenStorageInterface
      */
-    protected $securityContext;
+    protected $tokenStorage;
 
     /**
      * @var PasswordEncoderInterface
@@ -44,13 +44,13 @@ abstract class UserPasswordValidatorTest extends AbstractConstraintValidatorTest
 
     protected function createValidator()
     {
-        return new UserPasswordValidator($this->securityContext, $this->encoderFactory);
+        return new UserPasswordValidator($this->tokenStorage, $this->encoderFactory);
     }
 
     protected function setUp()
     {
         $user = $this->createUser();
-        $this->securityContext = $this->createSecurityContext($user);
+        $this->tokenStorage = $this->createTokenStorage($user);
         $this->encoder = $this->createPasswordEncoder();
         $this->encoderFactory = $this->createEncoderFactory($this->encoder);
 
@@ -95,9 +95,9 @@ abstract class UserPasswordValidatorTest extends AbstractConstraintValidatorTest
      */
     public function testUserIsNotValid()
     {
-        $user = $this->getMock('Foo\Bar\User');
+        $user = $this->getMockBuilder('Foo\Bar\User')->getMock();
 
-        $this->securityContext = $this->createSecurityContext($user);
+        $this->tokenStorage = $this->createTokenStorage($user);
         $this->validator = $this->createValidator();
         $this->validator->initialize($this->context);
 
@@ -106,7 +106,7 @@ abstract class UserPasswordValidatorTest extends AbstractConstraintValidatorTest
 
     protected function createUser()
     {
-        $mock = $this->getMock('Symfony\Component\Security\Core\User\UserInterface');
+        $mock = $this->getMockBuilder('Symfony\Component\Security\Core\User\UserInterface')->getMock();
 
         $mock
             ->expects($this->any())
@@ -125,12 +125,12 @@ abstract class UserPasswordValidatorTest extends AbstractConstraintValidatorTest
 
     protected function createPasswordEncoder($isPasswordValid = true)
     {
-        return $this->getMock('Symfony\Component\Security\Core\Encoder\PasswordEncoderInterface');
+        return $this->getMockBuilder('Symfony\Component\Security\Core\Encoder\PasswordEncoderInterface')->getMock();
     }
 
     protected function createEncoderFactory($encoder = null)
     {
-        $mock = $this->getMock('Symfony\Component\Security\Core\Encoder\EncoderFactoryInterface');
+        $mock = $this->getMockBuilder('Symfony\Component\Security\Core\Encoder\EncoderFactoryInterface')->getMock();
 
         $mock
             ->expects($this->any())
@@ -141,11 +141,11 @@ abstract class UserPasswordValidatorTest extends AbstractConstraintValidatorTest
         return $mock;
     }
 
-    protected function createSecurityContext($user = null)
+    protected function createTokenStorage($user = null)
     {
         $token = $this->createAuthenticationToken($user);
 
-        $mock = $this->getMock('Symfony\Component\Security\Core\SecurityContextInterface');
+        $mock = $this->getMockBuilder('Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface')->getMock();
         $mock
             ->expects($this->any())
             ->method('getToken')
@@ -157,7 +157,7 @@ abstract class UserPasswordValidatorTest extends AbstractConstraintValidatorTest
 
     protected function createAuthenticationToken($user = null)
     {
-        $mock = $this->getMock('Symfony\Component\Security\Core\Authentication\Token\TokenInterface');
+        $mock = $this->getMockBuilder('Symfony\Component\Security\Core\Authentication\Token\TokenInterface')->getMock();
         $mock
             ->expects($this->any())
             ->method('getUser')

@@ -20,8 +20,6 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
  * Validates whether a value is a valid language code.
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
- *
- * @api
  */
 class LanguageValidator extends ConstraintValidator
 {
@@ -46,8 +44,9 @@ class LanguageValidator extends ConstraintValidator
         $languages = Intl::getLanguageBundle()->getLanguageNames();
 
         if (!isset($languages[$value])) {
-            $this->buildViolation($constraint->message)
+            $this->context->buildViolation($constraint->message)
                 ->setParameter('{{ value }}', $this->formatValue($value))
+                ->setCode(Language::NO_SUCH_LANGUAGE_ERROR)
                 ->addViolation();
         }
     }

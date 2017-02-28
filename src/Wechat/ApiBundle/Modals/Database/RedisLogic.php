@@ -85,11 +85,11 @@ class RedisLogic
     }
 
     public function checkSet($key ,$val){
-	     return $this->sIsMember($this->prostr.$key ,$val);
+	     return $this->redis->sIsMember($this->prostr.$key ,$val);
     }
 
     public function delSet($key ,$val){
-	     return $this->sRem($this->prostr.$key ,$val);
+	     return $this->redis->sRem($this->prostr.$key ,$val);
     }
 
     public function getallSet($key){

@@ -11,13 +11,14 @@
 
 namespace Symfony\Bridge\Doctrine\Form\ChoiceList;
 
-use Symfony\Component\Form\Exception\UnexpectedTypeException;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\DBAL\Connection;
-use Doctrine\ORM\EntityManager;
 
 /**
- * Getting Entities through the ORM QueryBuilder.
+ * Loads entities using a {@link QueryBuilder} instance.
+ *
+ * @author Benjamin Eberlei <kontakt@beberlei.de>
+ * @author Bernhard Schussek <bschussek@gmail.com>
  */
 class ORMQueryBuilderLoader implements EntityLoaderInterface
 {
@@ -34,32 +35,10 @@ class ORMQueryBuilderLoader implements EntityLoaderInterface
     /**
      * Construct an ORM Query Builder Loader.
      *
-     * @param QueryBuilder|\Closure $queryBuilder
-     * @param EntityManager         $manager
-     * @param string                $class
-     *
-     * @throws UnexpectedTypeException
+     * @param QueryBuilder $queryBuilder The query builder for creating the query builder
      */
-    public function __construct($queryBuilder, $manager = null, $class = null)
+    public function __construct(QueryBuilder $queryBuilder)
     {
-        // If a query builder was passed, it must be a closure or QueryBuilder
-        // instance
-        if (!($queryBuilder instanceof QueryBuilder || $queryBuilder instanceof \Closure)) {
-            throw new UnexpectedTypeException($queryBuilder, 'Doctrine\ORM\QueryBuilder or \Closure');
-        }
-
-        if ($queryBuilder instanceof \Closure) {
-            if (!$manager instanceof EntityManager) {
-                throw new UnexpectedTypeException($manager, 'Doctrine\ORM\EntityManager');
-            }
-
-            $queryBuilder = $queryBuilder($manager->getRepository($class));
-
-            if (!$queryBuilder instanceof QueryBuilder) {
-                throw new UnexpectedTypeException($queryBuilder, 'Doctrine\ORM\QueryBuilder');
-            }
-        }
-
         $this->queryBuilder = $queryBuilder;
     }
 
@@ -76,9 +55,10 @@ class ORMQueryBuilderLoader implements EntityLoaderInterface
      */
     public function getEntitiesByIds($identifier, array $values)
     {
-        $qb = clone ($this->queryBuilder);
+        $qb = clone $this->queryBuilder;
         $alias = current($qb->getRootAliases());
         $parameter = 'ORMQueryBuilderLoader_getEntitiesByIds_'.$identifier;
+        $parameter = str_replace('.', '_', $parameter);
         $where = $qb->expr()->in($alias.'.'.$identifier, ':'.$parameter);
 
         // Guess type
@@ -90,7 +70,14 @@ class ORMQueryBuilderLoader implements EntityLoaderInterface
             // Filter out non-integer values (e.g. ""). If we don't, some
             // databases such as PostgreSQL fail.
             $values = array_values(array_filter($values, function ($v) {
-                return (string) $v === (string) (int) $v;
+                return (string) $v === (string) (int) $v || ctype_digit($v);
+            }));
+        } elseif ('guid' === $metadata->getTypeOfField($identifier)) {
+            $parameterType = Connection::PARAM_STR_ARRAY;
+
+            // Like above, but we just filter out empty strings.
+            $values = array_values(array_filter($values, function ($v) {
+                return (string) $v !== '';
             }));
         } else {
             $parameterType = Connection::PARAM_STR_ARRAY;

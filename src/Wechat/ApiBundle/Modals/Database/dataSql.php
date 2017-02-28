@@ -205,7 +205,7 @@ class dataSql{
   }
 
   public function getmenusDb(){
-    return $this->searchData(array() ,array('id', 'menuName', 'eventtype', 'eventKey', 'eventUrl', 'width'), 'wechat_menu');
+    return $this->searchData(array() ,array('id', 'menuName', 'eventtype', 'eventKey', 'eventUrl', 'width' ,'eventmedia_id'), 'wechat_menu');
   }
 
   public function getMenuHierarchy(){
@@ -245,9 +245,25 @@ class dataSql{
     if(isset($info[0])){
       $info = $info[0];
       $info['buttonevent'] = $this->getbuttonEvent(array('menuId' => $id));
+      if($info['eventmedia_id']){
+        $sql = "SELECT A.id,A.media_id,A.update_time,B.title,B.digest,B.url,B.thumb_url FROM wechat_material as A LEFT JOIN wechat_material_news as B ON A.media_id=B.media_id WHERE A.media_id = ?";
+        if($list = $this->querysqlp($sql, array($info['eventmedia_id']))){
+          $info['eventmedia_info'] = $this->dealList($list);
+        }
+      }
       return $info;
     }
     return false;
+  }
+
+  public function dealList($list){
+    $result = array();
+    foreach($list as $x){
+      if(!isset($result[$x['media_id']]))
+        $result[$x['media_id']] = array();
+      $result[$x['media_id']][] = $x;
+    }
+    return $result;
   }
 
   public function updateButton($id, $button = array(), $event = array()){//set old button

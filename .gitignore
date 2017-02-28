@@ -5,3 +5,6 @@
 /app/logs/
 /web/upload/
 /web/RedisMyAdmin/
+/var/cache/
+/var/logs/
+/var/sessions/

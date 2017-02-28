@@ -11,7 +11,7 @@ $ids = array();
 if(file_exists(dirname(__FILE__).'/../upload/wechatcache/jssdkids.php'))
   $ids = require_once(dirname(__FILE__).'/../upload/wechatcache/jssdkids.php');
 
-if(!in_array($jsid, $ids)){
+if(!isset($ids[$jsid])){
   print_r("this jssdk not exists");
   exit;
 }
@@ -21,6 +21,14 @@ if(isset($_SERVER['HTTP_REFERER'])){
 }else{
   $url = $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
 }
+
+preg_match_all("/^http[s]{0,1}:\/\/([^\/]*)\/.*/", $url, $newpath, PREG_SET_ORDER);
+$domain = isset($newpath['0']['1'])?$newpath['0']['1']:'';
+if($domain !== $ids[$jsid]['domain']){
+  print_r("jsid domain not allow");
+  exit;
+}
+
 $wechatfun = new wechatfun();
 $jssdk = $wechatfun->getJsSDK($url);
 $jscode = array(

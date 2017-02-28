@@ -34,7 +34,7 @@ class Route
     /**
      * Constructor.
      *
-     * @param array $data An array of key/value parameters.
+     * @param array $data An array of key/value parameters
      *
      * @throws \BadMethodCallException
      */
@@ -52,22 +52,6 @@ class Route
             }
             $this->$method($value);
         }
-    }
-
-    /**
-     * @deprecated Deprecated in 2.2, to be removed in 3.0. Use setPath instead.
-     */
-    public function setPattern($pattern)
-    {
-        $this->path = $pattern;
-    }
-
-    /**
-     * @deprecated Deprecated in 2.2, to be removed in 3.0. Use getPath instead.
-     */
-    public function getPattern()
-    {
-        return $this->path;
     }
 
     public function setPath($path)

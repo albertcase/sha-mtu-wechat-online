@@ -34,18 +34,6 @@ var oauthjs = {
           "data": "redirect_url"
         },
         {
-          "data": "scope",
-          "class": "t-center"
-        },
-        {
-          "data": "oauthfile",
-          "render": function ( data, type, row ) {
-            if(!data)
-              return "";
-            return '<a target="_blank" href="/wechat/oauth/vendor/'+data+'">' + pagecode.hosts +'/wechat/oauth/vendor/' + data + "</a>";
-          },
-        },
-        {
           "class": "t-center",
           "data": null,
           "defaultContent": '<i class="fa fa-edit fa-lg"></i>'
@@ -73,9 +61,7 @@ var oauthjs = {
       type:"post",
       data: {
         "redirect_url": $("#addoauth .oauthredirect").val(),
-        "callback_url": $("#addoauth .oauthcallback").val(),
         name: $("#addoauth .oauthname").val(),
-        scope: $("#addoauth .oauthscope").val(),
       },
       dataType:'json',
       success: function(data){
@@ -108,9 +94,7 @@ var oauthjs = {
         popup.closeloading();
         if(data.code == "10"){
           $("#editoauth .oauthredirect").val(data.info["redirect_url"]);
-          $("#editoauth .oauthcallback").val(data.info["callback_url"]);
           $("#editoauth .oauthname").val(data.info["name"]);
-          $("#editoauth .oauthscope").val(data.info["scope"]);
           publicall.gotoedit("editoauth");
         }
         popup.openwarning(data.msg);
@@ -130,9 +114,7 @@ var oauthjs = {
       data: {
         id: self.ajaxeditid,
         "redirect_url": $("#editoauth .oauthredirect").val(),
-        "callback_url": $("#editoauth .oauthcallback").val(),
         name: $("#editoauth .oauthname").val(),
-        scope: $("#editoauth .oauthscope").val(),
       },
       dataType:'json',
       success: function(data){

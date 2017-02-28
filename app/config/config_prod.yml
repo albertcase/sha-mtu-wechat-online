@@ -2,8 +2,8 @@ imports:
     - { resource: config.yml }
 
 #framework:
-#    validation:
-#        cache: apc
+#    cache:
+#        system: cache.adapter.apcu
 
 #doctrine:
 #    orm:
@@ -19,7 +19,7 @@ monolog:
             handler:      nested
         nested:
             type:  stream
-            path:  "%kernel.logs_dir%/%kernel.environment%.log"
+            path:  "%env(SYMFONY_LOG)%"
             level: debug
         console:
             type:  console

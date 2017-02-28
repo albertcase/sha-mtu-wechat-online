@@ -40,18 +40,9 @@ class jssdkupdate extends FormRequest{
         'domain' => $this->getdata['domain'],
         'name' => $this->getdata['name'],
       );
-      $list = $this->container->get('my.dataSql')->searchData(array(), array(), 'wechat_jssdk');
-      $parmeter = "parameters:\n\n    wechat_jssdkids:\n";
-      foreach ($list as $x) {
-        $parmeter .= "      - ".$x['jsfilename']."\n";
-      }
-      $parmeter .= "      - 60c4349e-c302-4313-9fa8-37a8ebd59853\n";
-      $filename = "../src/Wechat/ApiBundle/Resources/config/jssdkids.yml";
-      $fs = new Filesystem();
-      if($fs->exists($filename))
-        $fs->remove($filename);
-      $fs->dumpFile($filename, $parmeter);
       $list = $this->container->get('my.dataSql')->jssdkupdate($this->getdata['id'], $change);
+      if($jinfo && isset($jinfo['jsfilename']))
+        $this->container->get('my.RedisLogic')->delkey('jssdk:'.$jinfo['jsfilename']);
       if($list)
         return array('code' => '10' ,'msg' => 'update success');
       return array('code' => '9' ,'msg' => 'update error');

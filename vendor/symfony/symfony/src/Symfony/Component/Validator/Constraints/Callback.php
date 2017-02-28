@@ -18,24 +18,13 @@ use Symfony\Component\Validator\Constraint;
  * @Target({"CLASS", "PROPERTY", "METHOD", "ANNOTATION"})
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
- *
- * @api
  */
 class Callback extends Constraint
 {
     /**
      * @var string|callable
-     *
-     * @since 2.4
      */
     public $callback;
-
-    /**
-     * @var array
-     *
-     * @deprecated Deprecated since version 2.4, to be removed in Symfony 3.0.
-     */
-    public $methods;
 
     /**
      * {@inheritdoc}
@@ -47,13 +36,8 @@ class Callback extends Constraint
             $options = $options['value'];
         }
 
-        if (is_array($options) && !isset($options['callback']) && !isset($options['methods']) && !isset($options['groups'])) {
-            if (is_callable($options)) {
-                $options = array('callback' => $options);
-            } else {
-                // BC with Symfony < 2.4
-                $options = array('methods' => $options);
-            }
+        if (is_array($options) && !isset($options['callback']) && !isset($options['groups']) && !isset($options['payload'])) {
+            $options = array('callback' => $options);
         }
 
         parent::__construct($options);

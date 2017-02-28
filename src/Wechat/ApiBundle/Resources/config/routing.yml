@@ -115,6 +115,10 @@ wechat_groupnews_papi_batchgetmaterial:
     path:     /wechat/batchgetmaterial
     defaults: { _controller: WechatApiBundle:Groupnews:batchgetmaterial }
 
+wechat_groupnews_papi_newsget:
+    path:     /wechat/newsget
+    defaults: { _controller: WechatApiBundle:Groupnews:newsget }
+
 wechat_groupnews_papi_getgrouptags:
     path:     /wechat/getgrouptags
     defaults: { _controller: WechatApiBundle:Groupnews:getgrouptags }
@@ -183,7 +187,7 @@ wechat_oauth_api_oauth2:
     defaults: { _controller: WechatApiBundle:Oauth:oauth2 }
 
 wechat_oauth_api_vendor:
-    path:     /wechat/oauth/vendor/{fid}
+    path:     /v1/wx/web/oauth2/authorize
     defaults: { _controller: WechatApiBundle:Oauth:vendor }
 
 wechat_oauth_papi_add:
@@ -206,6 +210,11 @@ wechat_oauth_papi_info:
     path:     /wechat/oauth/info
     defaults: { _controller: WechatApiBundle:Oauth:info }
 # oauth end
+# wechat user status
+wechat_user_api_status:
+    path:     /wechat/user/status
+    defaults: { _controller: WechatApiBundle:WechatUsers:userstatus }
+# wechat user status end
 # stores
 wechat_stores_papi_add:
     path:     /wechat/stores/add
@@ -279,3 +288,12 @@ wechat_npage_test2:
 wechat_npage_buildphpcache:
     path:     /wechat/buildphpcache
     defaults: { _controller: WechatApiBundle:Page:buildphpcache }
+
+# wechat card
+wechat_card_api_cardjsadd:
+    path:     /v1/wx/card/{cid}/js/add
+    defaults: { _controller: WechatApiBundle:Card:cardsjsadd }
+
+wechat_card_api_cardjschoose:
+    path:     /v1/wx/card/{cid}/js/choose
+    defaults: { _controller: WechatApiBundle:Card:cardsjschoose }

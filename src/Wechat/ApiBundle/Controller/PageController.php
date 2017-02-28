@@ -27,7 +27,7 @@ class PageController extends Controller
   }
 
   public function jssdkAction(){
-    return $this->render('WechatApiBundle:Page:jssdk.html.twig',array('host' => $this->getRequest()->getSchemeAndHttpHost()));
+    return $this->render('WechatApiBundle:Page:jssdk.html.twig',array('host' => $this->container->get('request_stack')->getCurrentRequest()->getSchemeAndHttpHost()));
   }
 
   public function qrcodeAction(){
@@ -35,7 +35,7 @@ class PageController extends Controller
   }
 
   public function oauthAction(){
-    return $this->render('WechatApiBundle:Page:oauth.html.twig',array('host' => $this->getRequest()->getSchemeAndHttpHost()));
+    return $this->render('WechatApiBundle:Page:oauth.html.twig',array('host' => $this->container->get('request_stack')->getCurrentRequest()->getSchemeAndHttpHost()));
   }
 
   public function storesAction(){
@@ -49,18 +49,19 @@ class PageController extends Controller
       'offset' => '0',
       'count' => '18',
     );
-    $check = $wehcat->getMateriallist($search);
-    if(isset($check['errcode'])){
-      $data = array();
-    }else{
-      $data = $check['item'];
-      $this->container->get('my.dataSql')->syncMaterial($data);
-      foreach($data as $x => $x_val){
-        foreach($x_val['content']['news_item'] as $xx => $xx_val){
-          $data[$x]['content']['news_item'][$xx]['thumb_url'] = '/cimg.php?style=w_400&image='.urlencode($data[$x]['content']['news_item'][$xx]['thumb_url']);
-        }
-      }
-    }
+    // $check = $wehcat->getMateriallist($search);
+    // if(isset($check['errcode'])){
+      // $data = array();
+    // }else{
+      // $data = $check['item'];
+      // $this->container->get('my.dataSql')->syncMaterial($data);
+      // foreach($data as $x => $x_val){
+      //   foreach($x_val['content']['news_item'] as $xx => $xx_val){
+      //     $data[$x]['content']['news_item'][$xx]['thumb_url'] = '/cimg.php?style=w_400&image='.urlencode($data[$x]['content']['news_item'][$xx]['thumb_url']);
+      //   }
+      // }
+    // }
+    $data = array();
     return $this->render('WechatApiBundle:Page:groupnews.html.twig', array('newslist' => $data));
   }
 

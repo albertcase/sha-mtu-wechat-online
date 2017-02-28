@@ -72,9 +72,16 @@ class ObjectsProvider
     {
         $builder = new ContainerBuilder();
         $builder->setParameter('database_name', 'symfony');
+        $builder->setParameter('twig.form.resources', array(
+            'bootstrap_3_horizontal_layout.html.twig',
+            'bootstrap_3_layout.html.twig',
+            'form_div_layout.html.twig',
+            'form_table_layout.html.twig',
+        ));
 
         return array(
-            'parameter' =>  $builder,
+            'parameter' => $builder,
+            'array_parameter' => $builder,
         );
     }
 
@@ -97,7 +104,6 @@ class ObjectsProvider
                 ->setPublic(true)
                 ->setSynthetic(false)
                 ->setLazy(true)
-                ->setSynchronized(true)
                 ->setAbstract(true)
                 ->setFactory(array('Full\\Qualified\\FactoryClass', 'get')),
             'definition_2' => $definition2
@@ -105,11 +111,11 @@ class ObjectsProvider
                 ->setSynthetic(true)
                 ->setFile('/path/to/file')
                 ->setLazy(false)
-                ->setSynchronized(false)
                 ->setAbstract(false)
                 ->addTag('tag1', array('attr1' => 'val1', 'attr2' => 'val2'))
                 ->addTag('tag1', array('attr3' => 'val3'))
                 ->addTag('tag2')
+                ->addMethodCall('setMailer', array(new Reference('mailer')))
                 ->setFactory(array(new Reference('factory.service'), 'get')),
         );
     }
@@ -126,8 +132,8 @@ class ObjectsProvider
     {
         $eventDispatcher = new EventDispatcher();
 
-        $eventDispatcher->addListener('event1', 'global_function');
-        $eventDispatcher->addListener('event1', function () { return 'Closure'; });
+        $eventDispatcher->addListener('event1', 'global_function', 255);
+        $eventDispatcher->addListener('event1', function () { return 'Closure'; }, -1);
         $eventDispatcher->addListener('event2', new CallableClass());
 
         return array('event_dispatcher_1' => $eventDispatcher);
@@ -152,9 +158,11 @@ class CallableClass
     public function __invoke()
     {
     }
+
     public static function staticMethod()
     {
     }
+
     public function method()
     {
     }

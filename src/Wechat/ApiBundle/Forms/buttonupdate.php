@@ -44,7 +44,7 @@ class buttonupdate extends FormRequest{
     $button = array();
     foreach($this->getdata as $x => $x_val){
       if($x_val){
-        if($x == 'menuName' || $x == 'eventtype' || $x == 'eventKey' || $x == 'eventUrl')
+        if($x == 'menuName' || $x == 'eventtype' || $x == 'eventKey' || $x == 'eventUrl' || $x == 'eventmedia_id')
           $button[$x] = $x_val;
       }
     }

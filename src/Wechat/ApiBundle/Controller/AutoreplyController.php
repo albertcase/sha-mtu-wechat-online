@@ -41,7 +41,8 @@ class AutoreplyController extends Controller
       return new Response(json_encode(array('code' => '9', 'msg' => 'this is not a image file'), JSON_UNESCAPED_UNICODE));
     $image = 'upload/image/'.$dir.'/'.uniqid().'.'.$photo->getClientOriginalExtension();
     $fs->rename($photo, $image, true);
-    $host = $this->getRequest()->getSchemeAndHttpHost();
+    // $host = $this->getRequest()->getSchemeAndHttpHost();//2.6
+    $host = $this->container->get('request_stack')->getCurrentRequest()->getSchemeAndHttpHost();//2.8
     return new Response(json_encode(array('code' => '10', 'path'=> $host.'/'.$image)));
   }
 }

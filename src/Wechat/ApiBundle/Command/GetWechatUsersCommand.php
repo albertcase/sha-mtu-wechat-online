@@ -12,7 +12,7 @@ use Symfony\Component\Config\FileLocator;
 class GetWechatUsersCommand extends Command{
 
   protected function configure(){
-    $this->setName('wechat:insert.allopenids')
+    $this->setName('wechat:retrieve.openidlist')
         ->setDescription('Insert all online openid')
         ->addArgument('next_openid',
           InputArgument::OPTIONAL,
@@ -45,7 +45,7 @@ class GetWechatUsersCommand extends Command{
   public function updateList($list){
     if(!is_array($list))
       return false;
-    $sql = $this->getApplication()->getKernel()->getContainer()->get('my.dataSql');
+    $sql = $this->getApplication()->getKernel()->getContainer()->get('my.LdataSql');
     foreach($list as $x){
       if(!$sql->searchData(array('openid' => $x) , array('id'), 'wechat_users'))
         $sql->insertData(array('openid' => $x), 'wechat_users');

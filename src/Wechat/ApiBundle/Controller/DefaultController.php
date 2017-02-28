@@ -16,13 +16,11 @@ class DefaultController extends Controller
 
     public function wechatAction()
     {
-      $wechatObj = $this->container->get('my.Wechat');
+      $wechatObj = $this->container->get('my.Wechat.Response');
       if(isset($_GET["echostr"])){
         return new Response($wechatObj->valid($_GET["echostr"]));
       }
-      $postStr = isset($GLOBALS["HTTP_RAW_POST_DATA"])?$GLOBALS["HTTP_RAW_POST_DATA"]:'';
-      $respose = new Response($wechatObj->responseMsg($postStr));
-      return $respose->send();
+      return new Response($wechatObj->RequestFeedback());
     }
 
     public function uploadstoreAction()

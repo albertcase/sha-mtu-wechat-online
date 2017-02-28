@@ -22,6 +22,12 @@ class GroupnewsController extends Controller
     return  new Response(json_encode($data, JSON_UNESCAPED_UNICODE));
   }
 
+  public function newsgetAction(){
+    $form = $this->container->get('form.newsget');
+    $data = $form->DoData();
+    return  new Response(json_encode($data, JSON_UNESCAPED_UNICODE));
+  }
+
   public function getgrouptagsAction(){
     $wehcat = $this->container->get('my.Wechat');
     $data = $wehcat->getWechatGroup();
