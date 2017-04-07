@@ -47,6 +47,14 @@ var stores = {
           },
         },
         {
+          "data": "storemap",
+          "render": function ( data, type, row ) {
+            if(!data)
+              return "";
+            return "<img src='"+data+"'/ style='width:120px'>";
+          },
+        },
+        {
           "class": "t-center",
           "data": null,
           "defaultContent": '<i class="fa fa-edit fa-lg"></i>'
@@ -75,7 +83,8 @@ var stores = {
         'lng': $("#addstores .storelng").val(),
         'openhours': $("#addstores .storeopenhours").val(),
         'brandtype': $("#addstores .storebrandtype").val(),
-        'storelog': $("#addstores .newspic").attr("src"),
+        'storelog': $("#storelog .newspic").eq(0).attr("src"),
+        'storemap': $("#storemap .newspic").eq(0).attr("src"),
       },
       dataType:'json',
       success: function(data){
@@ -141,7 +150,10 @@ var stores = {
           $("#editstores .storelng").val(data.info.lng);
           $("#editstores .storeopenhours").val(data.info.openhours);
           $("#editstores .storebrandtype").val(data.info.brandtype);
-          fileupload.replaceinput(data.info.storelog, $("#editstores .newsfile"));
+          // $("#storelog .newspic").eq(0).attr("src", data.info.storelog);
+          // $("#storemap .newspic").eq(0).attr("src", data.info.storemap);
+          fileupload.replaceinput(data.info.storelog, $("#editstores .newsfile").eq(0));
+          fileupload.replaceinput(data.info.storemap, $("#editstores .newsfile").eq(1));
           publicall.gotoedit("editstores");
         }
         popup.openwarning(data.msg);
@@ -167,7 +179,8 @@ var stores = {
         'lng': $("#editstores .storelng").val(),
         'openhours': $("#editstores .storeopenhours").val(),
         'brandtype': $("#editstores .storebrandtype").val(),
-        'storelog': $("#editstores .newspic").attr("src"),
+        'storelog': $("#storelog .newspic").eq(0).attr("src"),
+        'storemap': $("#storemap .newspic").eq(0).attr("src"),
       },
       dataType:'json',
       success: function(data){
