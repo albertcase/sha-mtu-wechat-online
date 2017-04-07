@@ -153,7 +153,7 @@ var stores = {
           // $("#storelog .newspic").eq(0).attr("src", data.info.storelog);
           // $("#storemap .newspic").eq(0).attr("src", data.info.storemap);
           fileupload.replaceinput(data.info.storelog, $("#editstores .newsfile").eq(0));
-          fileupload.replaceinput(data.info.storemap, $("#editstores .newsfile").eq(1));
+          fileupload.replaceinput(data.info.storemap, $("#editstores .newsfile").eq(0));
           publicall.gotoedit("editstores");
         }
         popup.openwarning(data.msg);
