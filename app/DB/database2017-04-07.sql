@@ -453,7 +453,7 @@ LOCK TABLES `wechat_admin` WRITE;
 
 INSERT INTO `wechat_admin` (`id`, `username`, `password`, `latestTime`, `createTime`)
 VALUES
-	(1,'admin','9f1afee1b1e64871f1dc70174d014933','2017-04-06 14:45:10','2016-05-13 17:25:01');
+	(1,'admin','846b57d6175d7f6268ef1d0a97c52f55','2017-04-06 14:45:10','2016-05-13 17:25:01');
 
 /*!40000 ALTER TABLE `wechat_admin` ENABLE KEYS */;
 UNLOCK TABLES;
